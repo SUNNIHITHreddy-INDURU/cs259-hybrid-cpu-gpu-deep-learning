@@ -12,50 +12,6 @@
 \hypersetup{pdftitle={CS 259 template demo},
             pdfauthor={Sunnihith Reddy Induru}}
 
-%% Demo bibliography written at compile time, so this file is self-contained.
-\begin{filecontents*}[overwrite]{demo_refs.bib}
-@article{lecun98,
-  author  = {Yann LeCun and L{\'e}on Bottou and Yoshua Bengio and Patrick Haffner},
-  title   = {Gradient-based learning applied to document recognition},
-  journal = {Proceedings of the IEEE},
-  volume  = {86}, number = {11}, pages = {2278--2324}, year = {1998}}
-@inproceedings{krizhevsky12,
-  author    = {Alex Krizhevsky and Ilya Sutskever and Geoffrey E. Hinton},
-  title     = {ImageNet classification with deep convolutional neural networks},
-  booktitle = {Advances in Neural Information Processing Systems 25},
-  pages     = {1097--1105}, year = {2012}}
-@book{kirk16,
-  author    = {David B. Kirk and Wen-mei W. Hwu},
-  title     = {Programming Massively Parallel Processors: A Hands-on Approach},
-  publisher = {Morgan Kaufmann}, edition = {3rd}, year = {2016}}
-@book{chapman08,
-  author    = {Barbara Chapman and Gabriele Jost and Ruud van der Pas},
-  title     = {Using {OpenMP}: Portable Shared Memory Parallel Programming},
-  publisher = {MIT Press}, year = {2008}}
-@misc{openmp52,
-  author       = {{OpenMP Architecture Review Board}},
-  title        = {{OpenMP} Application Programming Interface, Version 5.2},
-  year         = {2021},
-  url          = {https://www.openmp.org/specifications/}}
-@misc{cudaguide,
-  author = {{NVIDIA Corporation}},
-  title  = {{CUDA} {C++} Programming Guide},
-  year   = {2024},
-  url    = {https://docs.nvidia.com/cuda/cuda-c-programming-guide/}}
-@inproceedings{amdahl67,
-  author    = {Gene M. Amdahl},
-  title     = {Validity of the single processor approach to achieving large
-               scale computing capabilities},
-  booktitle = {Proceedings of the AFIPS Spring Joint Computer Conference},
-  pages     = {483--485}, year = {1967}}
-@inproceedings{abadi16,
-  author    = {Mart{\'\i}n Abadi and Paul Barham and Jianmin Chen and others},
-  title     = {{TensorFlow}: A system for large-scale machine learning},
-  booktitle = {Proceedings of the 12th USENIX Symposium on Operating Systems
-               Design and Implementation (OSDI)},
-  pages     = {265--283}, year = {2016}}
-\end{filecontents*}
-
 \title{Performance Evaluation of Hybrid CPU-GPU Parallelism\\
        for Deep Learning Using OpenMP and CUDA}
 \author{Sunnihith Reddy Induru}
@@ -101,6 +57,15 @@ Section~\ref{sec:method} the methodology, and Section~\ref{sec:results}
 the results shown in Figure~\ref{fig:speedup}, Figure~\ref{fig:wide}, and
 Tables~\ref{tab:cfg} and~\ref{tab:res}.
 
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{demo_figs/demo_wide.pdf}
+  \caption{Time breakdown per epoch (left) and training throughput versus
+  batch size (right), synthetic data. Two-column figure, caption centered
+  below.}
+  \label{fig:wide}
+\end{figure*}
+
 \section{Background and Related Work}
 Amdahl observed that the serial fraction of a program bounds the achievable
 speedup \cite{amdahl67}. If a fraction $f$ of the work is parallelisable over
@@ -116,6 +81,13 @@ data over the PCIe bus. Frameworks such as TensorFlow \cite{abadi16} hide
 this placement from the user, which is convenient but makes controlled
 comparisons difficult.
 
+Related efforts on hybrid execution generally fall into two groups: static
+partitioning, where the split between devices is fixed before the run, and
+dynamic partitioning, where a runtime adjusts the split from measured
+throughput. We adopt the former for simplicity and revisit the latter in the
+discussion. Reporting practice also varies: some studies quote the best run,
+others the mean, and few state how many warm-up iterations were discarded.
+
 \subsection{Programming Models}
 OpenMP expresses parallelism with compiler directives and a fork-join model,
 whereas CUDA exposes an explicit grid of thread blocks. Both are described in
@@ -130,8 +102,9 @@ conventional cache hierarchy. The distinction explains most of the
 performance gap between the two versions in Section~\ref{sec:results}.
 
 \subsubsection{Synchronisation}
-OpenMP offers barriers and reductions; CUDA offers \code{__syncthreads()}
-within a block and kernel boundaries across blocks.
+Within a block, CUDA offers the barrier \code{__syncthreads()}; across blocks
+the only global synchronisation points are kernel boundaries. OpenMP offers
+barriers and reductions at the thread-team level.
 
 \section{Workload and Dataset}
 The workload is a small convolutional network trained on
@@ -178,9 +151,28 @@ that it is numbered and captioned like any other figure.}
 \end{figure}
 
 \subsection{CUDA}
-Each thread computes one output element. The launch configuration uses 256
+Each thread computes one output element (Figure~\ref{lst:cuda}). The launch configuration uses 256
 threads per block; \code{cudaMemcpyAsync} overlaps transfers with compute
 when pinned host memory is used.
+
+\begin{figure}[t]
+\begin{lstlisting}[language=CUDA]
+__global__ void scale(float *y, const float *x,
+                      float a, int n) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  if (i < n) y[i] = a * x[i];   // one thread per element
+}
+\end{lstlisting}
+\caption{A CUDA kernel in the listing style (CUDA keywords highlighted).}
+\label{lst:cuda}
+\end{figure}
+
+\subsubsection{Host Memory}
+On the host side, the choice of allocation matters.
+
+\paragraph{Pinned memory}
+Page-locked host buffers roughly double the achievable PCIe bandwidth, which
+matters most at small batch sizes.
 
 \subsection{Hybrid OpenMP-CUDA}
 Each mini-batch is split into a CPU part and a GPU part whose sizes are
@@ -188,19 +180,31 @@ proportional to the measured device throughputs. The CPU part runs under
 OpenMP while the GPU part runs asynchronously in a CUDA stream; the two are
 joined at the end of every iteration.
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{demo_figs/demo_col.pdf}
-  \caption{Speedup over the serial baseline versus CPU thread count
-  (synthetic data). One-column figure, caption centered below.}
-  \label{fig:speedup}
-\end{figure}
+\colfigure{demo_figs/demo_col.pdf}%
+  {Speedup over the serial baseline versus CPU thread count (synthetic data).
+   One-column figure, caption centered below.}{fig:speedup}
 
 \section{Experimental Methodology}\label{sec:method}
 Every configuration is run ten times after two warm-up runs and the median is
 reported. Wall-clock time is measured with \code{omp_get_wtime()} on the host
 and with CUDA events on the device. The GPU is placed in a fixed performance
 state, and the CPU governor is set to \code{performance} to reduce noise.
+
+\begin{widetable}{Median time per epoch and speedup (synthetic data).
+  Two-column table, caption centered above.}{tab:res}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
+\toprule
+ & \multicolumn{3}{c}{Batch size 64} & \multicolumn{3}{c}{Batch size 256} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Implementation & Time (s) & Speedup & Eff. & Time (s) & Speedup & Eff. \\
+\midrule
+Serial CPU      & 9.50 & 1.0$\times$  & 1.00 & 9.12 & 1.0$\times$  & 1.00 \\
+OpenMP (16 thr.)& 1.62 & 5.9$\times$  & 0.37 & 1.40 & 6.5$\times$  & 0.41 \\
+CUDA            & 0.71 & 13.4$\times$ & ---  & 0.35 & 26.1$\times$ & ---  \\
+Hybrid          & 0.58 & 16.4$\times$ & ---  & 0.30 & 30.4$\times$ & ---  \\
+\bottomrule
+\end{tabular*}
+\end{widetable}
 
 \subsection{Metrics}
 We report time per epoch, speedup $S=T_{\mathrm{serial}}/T_{\mathrm{impl}}$,
@@ -217,14 +221,6 @@ epoch. Floating-point reductions are not associative, so a relative tolerance
 of $10^{-5}$ is used on the loss and $10^{-4}$ on the weights; all runs
 satisfied both bounds.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{demo_figs/demo_wide.pdf}
-  \caption{Time breakdown per epoch (left) and training throughput versus
-  batch size (right), synthetic data. Two-column figure, caption centered
-  below.}
-  \label{fig:wide}
-\end{figure*}
 
 \section{Results}\label{sec:results}
 Figure~\ref{fig:speedup} shows the OpenMP version scaling almost linearly up
@@ -234,23 +230,13 @@ contribution on top of the GPU, as predicted by the throughput model above.
 Figure~\ref{fig:wide} breaks the epoch time into compute and transfer, and
 shows that the transfer share shrinks as the batch size grows.
 
-\begin{table*}[t]
-\caption{Median time per epoch and speedup (synthetic data). Two-column table,
-caption centered above.}
-\label{tab:res}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrr@{}}
-\toprule
- & \multicolumn{3}{c}{Batch size 64} & \multicolumn{3}{c}{Batch size 256} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}
-Implementation & Time (s) & Speedup & Eff. & Time (s) & Speedup & Eff. \\
-\midrule
-Serial CPU      & 9.50 & 1.0$\times$  & 1.00 & 9.12 & 1.0$\times$  & 1.00 \\
-OpenMP (16 thr.)& 1.62 & 5.9$\times$  & 0.37 & 1.40 & 6.5$\times$  & 0.41 \\
-CUDA            & 0.71 & 13.4$\times$ & ---  & 0.35 & 26.1$\times$ & ---  \\
-Hybrid          & 0.58 & 16.4$\times$ & ---  & 0.30 & 30.4$\times$ & ---  \\
-\bottomrule
-\end{tabular*}
-\end{table*}
+
+The OpenMP and CUDA versions respond very differently to the batch size. For
+small batches the GPU is under-occupied and kernel-launch latency dominates;
+for large batches the arithmetic intensity grows and the GPU approaches its
+peak throughput. The CPU, by contrast, is limited by memory bandwidth almost
+irrespective of the batch size, which is why its curve in
+Figure~\ref{fig:wide} is flat.
 
 \subsection{Scaling}
 Parallel efficiency of the OpenMP version drops from $0.92$ at two threads to
@@ -270,6 +256,12 @@ but the gain over CUDA is modest (about 18\% at batch size 64 and 14\% at
 batch size 256) because the CPU contributes only a small fraction of the
 total throughput. The balance point depends on the batch size, which suggests
 adapting the split at run time rather than fixing it in advance.
+
+A second observation concerns variance. The coefficient of variation of the
+epoch time was below two percent for the serial and OpenMP versions but up to
+six percent for the CUDA and hybrid versions, mainly because of asynchronous
+transfers. We therefore report medians and, in the full study, also the
+interquartile range.
 
 \section{Limitations and Threats to Validity}
 Results come from a single machine and a single network. Compiler versions,

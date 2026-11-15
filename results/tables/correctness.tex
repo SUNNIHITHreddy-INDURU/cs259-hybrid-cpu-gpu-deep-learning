@@ -1,0 +1,9 @@
+\begin{tabular}{llrrrrrr}
+\toprule
+Platform & Comparison & Configs & Max abs error & Mean abs error & Min agreement \% & Accuracy \% & Pass \\
+\midrule
+mac\_m4 & Serial float32 vs NumPy float64 & 1 & 9.2e-5 & 1.7e-5 & 100 & 100.00 & 1/1 \\
+mac\_m4 & Serial batch-invariance & 3 & 0.00 & 0.00 & 100 & 97.97 & 3/3 \\
+mac\_m4 & Serial vs OpenMP & 16 & 0.00 & 0.00 & 100 & 97.97 & 16/16 \\
+\bottomrule
+\end{tabular}

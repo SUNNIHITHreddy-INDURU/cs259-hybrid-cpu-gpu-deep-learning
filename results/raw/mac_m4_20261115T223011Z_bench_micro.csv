@@ -1,0 +1,13 @@
+timestamp_utc,platform,metric,threads,value,unit
+2026-11-15T22:33:07Z,mac_m4,openmp_fork_join,1,0.047486,us
+2026-11-15T22:33:07Z,mac_m4,cpu_triad_bandwidth,1,90.032,GB/s
+2026-11-15T22:33:07Z,mac_m4,openmp_fork_join,2,3.89287,us
+2026-11-15T22:33:07Z,mac_m4,cpu_triad_bandwidth,2,94.2301,GB/s
+2026-11-15T22:33:07Z,mac_m4,openmp_fork_join,4,7.2505,us
+2026-11-15T22:33:07Z,mac_m4,cpu_triad_bandwidth,4,92.0745,GB/s
+2026-11-15T22:33:07Z,mac_m4,openmp_fork_join,6,13.0506,us
+2026-11-15T22:33:07Z,mac_m4,cpu_triad_bandwidth,6,93.4366,GB/s
+2026-11-15T22:33:08Z,mac_m4,openmp_fork_join,8,19.9355,us
+2026-11-15T22:33:08Z,mac_m4,cpu_triad_bandwidth,8,92.7683,GB/s
+2026-11-15T22:33:08Z,mac_m4,openmp_fork_join,10,21.9801,us
+2026-11-15T22:33:08Z,mac_m4,cpu_triad_bandwidth,10,86.4604,GB/s

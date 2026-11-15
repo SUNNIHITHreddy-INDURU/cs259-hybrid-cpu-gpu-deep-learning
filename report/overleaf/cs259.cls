@@ -83,22 +83,24 @@
 
 %% ---------------------------------------------------------- page geometry
 %% Text block: 7 in x 9.25 in; left edge 0.75 in; top edge 1 in.
-\setlength{\textwidth}{504pt}          % 7 in
-\setlength{\textheight}{666pt}         % 9.25 in
-\setlength{\columnsep}{24pt}           % 0.33 in gutter -> 240 pt (3.33 in) columns
+%% All layout lengths use bp (1/72 in), the unit of the template (Word "points"),
+%% not TeX points (1/72.27 in).
+\setlength{\textwidth}{504bp}          % 7 in
+\setlength{\textheight}{664bp}         % 9.25 in minus 2 bp so that descenders of the last line stay inside the rectangle
+\setlength{\columnsep}{24bp}           % gutter; columns are (504-24)/2 = 240 bp = 3.33 in
 \setlength{\columnseprule}{0pt}
 \setlength{\hoffset}{0pt}
 \setlength{\voffset}{0pt}
-\setlength{\oddsidemargin}{-18pt}      % 54 pt - 1 in
-\setlength{\evensidemargin}{-18pt}
-\setlength{\topmargin}{0pt}            % 72 pt from the top
+\setlength{\oddsidemargin}{-18bp}      % 54 bp (0.75 in) minus TeX's 1 in origin
+\setlength{\evensidemargin}{-18bp}
+\setlength{\topmargin}{0pt}            % text starts 72 bp = 1 in from the top
 \setlength{\headheight}{0pt}
 \setlength{\headsep}{0pt}
 \setlength{\footskip}{0pt}
 \setlength{\marginparwidth}{0pt}
 \setlength{\marginparsep}{0pt}
 \setlength{\marginparpush}{0pt}
-\setlength{\topskip}{10.5pt}
+\setlength{\topskip}{8.1bp}            % body text: first baseline 8.1 bp below the top margin
 \setlength{\maxdepth}{.5\topskip}
 
 %% -------------------------------------------- no headers/footers/numbers
@@ -108,61 +110,75 @@
 \let\ps@myheadings\ps@empty
 
 %% ------------------------------------------------------------ font sizes
-%% Body: Times 9 pt on 10.35 pt (single spacing of a 9 pt Times line).
+%% Sizes and leading are given in bp so that "9 pt" means the same 9/72 in as
+%% in the Word template.  \cs@setsize\cmd{size}{leading} (bp);
+%% \cs@fontsize{size}{leading} selects a size; \cs@mathsizes sets script sizes.
+\newcommand\cs@setsize[3]{%
+  \edef\cs@x{\noexpand\@setfontsize\noexpand#1{\strip@pt\dimexpr#2bp\relax}%
+    {\strip@pt\dimexpr#3bp\relax}}\cs@x}
+\newcommand\cs@fontsize[2]{%
+  \edef\cs@x{\noexpand\fontsize{\strip@pt\dimexpr#1bp\relax}%
+    {\strip@pt\dimexpr#2bp\relax}}\cs@x\selectfont}
+\newcommand\cs@mathsizes[3]{%
+  \edef\cs@x{\noexpand\DeclareMathSizes{\strip@pt\dimexpr#1bp\relax}%
+    {\strip@pt\dimexpr#1bp\relax}{\strip@pt\dimexpr#2bp\relax}%
+    {\strip@pt\dimexpr#3bp\relax}}\cs@x}
+
+%% Body: Times 9 on 10.35 (single spacing of a 9 pt Times line in Word).
 \renewcommand\normalsize{%
-  \@setfontsize\normalsize{9}{10.35}%
-  \abovedisplayskip 6\p@ \@plus1\p@ \@minus2\p@
+  \cs@setsize\normalsize{9}{10.35}%
+  \abovedisplayskip 6bp \@plus1\p@ \@minus2\p@
   \abovedisplayshortskip \z@ \@plus2\p@
-  \belowdisplayshortskip 3\p@ \@plus1\p@ \@minus1\p@
+  \belowdisplayshortskip 3bp \@plus1\p@ \@minus1\p@
   \belowdisplayskip \abovedisplayskip
   \let\@listi\@listI}
 \renewcommand\small{%
-  \@setfontsize\small{8}{9.2}%
-  \abovedisplayskip 5\p@ \@plus1\p@ \@minus2\p@
+  \cs@setsize\small{8}{9.2}%
+  \abovedisplayskip 5bp \@plus1\p@ \@minus2\p@
   \abovedisplayshortskip \z@ \@plus1\p@
-  \belowdisplayshortskip 2.5\p@ \@plus1\p@ \@minus1\p@
+  \belowdisplayshortskip 2.5bp \@plus1\p@ \@minus1\p@
   \belowdisplayskip \abovedisplayskip
-  \def\@listi{\leftmargin\leftmargini \topsep 3\p@ \@plus1\p@ \@minus1\p@
-    \parsep \z@ \@plus.5\p@ \itemsep 1\p@ \@plus.5\p@}}
+  \def\@listi{\leftmargin\leftmargini \topsep \z@ \@plus1\p@ \@minus1\p@
+    \parsep \z@ \@plus.5\p@ \itemsep 1bp \@plus.5\p@}}
 %% The template prescribes 9 pt footnotes.
-\renewcommand\footnotesize{\@setfontsize\footnotesize{9}{10.35}%
+\renewcommand\footnotesize{\cs@setsize\footnotesize{9}{10.35}%
   \let\@listi\@listI}
-\renewcommand\scriptsize{\@setfontsize\scriptsize{7}{8}}
-\renewcommand\tiny{\@setfontsize\tiny{5.5}{6.5}}
-\renewcommand\large{\@setfontsize\large{11}{12.65}}
-\renewcommand\Large{\@setfontsize\Large{12}{13.8}}
-\renewcommand\LARGE{\@setfontsize\LARGE{14}{16.1}}
-\renewcommand\huge{\@setfontsize\huge{18}{20.7}}
-\renewcommand\Huge{\@setfontsize\Huge{18}{20.7}}
-\DeclareMathSizes{9}{9}{6.5}{5}
-\DeclareMathSizes{8}{8}{6}{5}
-\DeclareMathSizes{7}{7}{5}{5}
-\DeclareMathSizes{11}{11}{8}{6}
-\DeclareMathSizes{12}{12}{8.5}{6}
-\DeclareMathSizes{14}{14}{10}{7}
-\DeclareMathSizes{18}{18}{12}{9}
+\renewcommand\scriptsize{\cs@setsize\scriptsize{7}{8}}
+\renewcommand\tiny{\cs@setsize\tiny{5.5}{6.5}}
+\renewcommand\large{\cs@setsize\large{11}{12.65}}
+\renewcommand\Large{\cs@setsize\Large{12}{13.8}}
+\renewcommand\LARGE{\cs@setsize\LARGE{14}{16.1}}
+\renewcommand\huge{\cs@setsize\huge{18}{20.7}}
+\renewcommand\Huge{\cs@setsize\Huge{18}{20.7}}
+\cs@mathsizes{9}{6.5}{5}
+\cs@mathsizes{8}{6}{5}
+\cs@mathsizes{7}{5}{5}
+\cs@mathsizes{11}{8}{6}
+\cs@mathsizes{12}{8.5}{6}
+\cs@mathsizes{14}{10}{7}
+\cs@mathsizes{18}{12}{9}
 
 \def\@listI{\leftmargin\leftmargini
-  \topsep 3\p@ \@plus1\p@ \@minus1\p@
+  \topsep \z@ \@plus1\p@ \@minus1\p@     % \parskip is added by LaTeX
   \parsep \z@ \@plus.5\p@
-  \itemsep 1.5\p@ \@plus.5\p@}
+  \itemsep 1.5bp \@plus.5\p@}
 \let\@listi\@listI
-\setlength\leftmargini{14\p@}
-\setlength\leftmarginii{12\p@}
-\setlength\leftmarginiii{10\p@}
-\setlength\leftmarginiv{10\p@}
-\setlength\labelsep{4\p@}
+\setlength\leftmargini{14bp}
+\setlength\leftmarginii{12bp}
+\setlength\leftmarginiii{10bp}
+\setlength\leftmarginiv{10bp}
+\setlength\labelsep{4bp}
 \setlength\labelwidth{\leftmargini}\addtolength\labelwidth{-\labelsep}
 \normalsize
 
 %% ------------------------------------------------- paragraphs, justification
 %% The template separates paragraphs by a 6 pt gap without indentation.
 \ifcs@indent
-  \setlength{\parindent}{9\p@}
+  \setlength{\parindent}{9bp}
   \setlength{\parskip}{\z@ \@plus .3\p@}
 \else
   \setlength{\parindent}{\z@}
-  \setlength{\parskip}{6\p@ \@plus 1.5\p@ \@minus .5\p@}
+  \setlength{\parskip}{6bp \@plus 1.5\p@ \@minus .5\p@}
 \fi
 \tolerance=1000
 \emergencystretch=1.5em
@@ -188,17 +204,26 @@
   \fi}{}
 \PassOptionsToPackage{hyphens}{url}
 \RequirePackage{listings}
+%% sorts and compresses citation lists: [3, 4] and [3--5]
+\IfFileExists{cite.sty}{\RequirePackage{cite}}{}
 
 %% ------------------------------------------------------ section headings
 \setcounter{secnumdepth}{4}
 \newlength{\cs@labelwd}
-\setlength{\cs@labelwd}{36pt}      % heading text starts 0.5 in right of the number
+\setlength{\cs@labelwd}{36bp}      % heading text starts 0.5 in right of the number
 \def\cs@punct@section{.}
 \def\cs@punct@subsection{}
 \def\cs@punct@subsubsection{}
 \def\cs@punct@paragraph{}
+%% The zero-width strut makes a heading at the very top of a column sit lower
+%% than body text there (as in the template); it has no effect elsewhere.
+\def\cs@strut@section{11bp}
+\def\cs@strut@subsection{11bp}
+\def\cs@strut@subsubsection{10bp}
+\def\cs@strut@paragraph{10bp}
 \renewcommand\@seccntformat[1]{%
-  \hb@xt@\cs@labelwd{\csname the#1\endcsname\csname cs@punct@#1\endcsname\hfil}}
+  \hb@xt@\cs@labelwd{\vrule\@height\csname cs@strut@#1\endcsname\@width\z@\@depth\z@
+    \csname the#1\endcsname\csname cs@punct@#1\endcsname\hfil}}
 
 %% LaTeX adds \parskip before the first paragraph below a heading; the
 %% template does not, so cancel it once the heading has been set.
@@ -218,19 +243,21 @@
 \let\cs@orig@trivlist\@trivlist
 \def\@trivlist{\ifvmode\if@nobreak\nobreak\vskip\parskip\fi\fi\cs@orig@trivlist}
 
-\newcommand\cs@sectionfont{\normalfont\fontsize{12}{13.8}\selectfont\bfseries}
-\newcommand\cs@subsubsectionfont{\normalfont\fontsize{11}{12.65}\selectfont\itshape}
+\newcommand\cs@sectionfont{\normalfont\cs@fontsize{12}{13.8}\bfseries
+  \raggedright \hyphenpenalty\@M \exhyphenpenalty\@M \vskip-.6bp}
+\newcommand\cs@subsubsectionfont{\normalfont\cs@fontsize{11}{12.65}\itshape
+  \raggedright \hyphenpenalty\@M \exhyphenpenalty\@M \vskip-.6bp}
 
 \renewcommand\section{\@startsection{section}{1}{\z@}%
-  {\z@ \@plus 1\p@ \@minus 1\p@}{.3\p@}{\cs@sectionfont\MakeUppercase}}
+  {\z@ \@plus 1\p@ \@minus 1\p@}{.75bp}{\cs@sectionfont\MakeUppercase}}
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
-  {\z@ \@plus 1\p@ \@minus 1\p@}{.3\p@}{\cs@sectionfont}}
+  {\z@ \@plus 1\p@ \@minus 1\p@}{.75bp}{\cs@sectionfont}}
 \renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
-  {\z@ \@plus 1\p@ \@minus 1\p@}{.3\p@}{\cs@subsubsectionfont}}
+  {\z@ \@plus 1\p@ \@minus 1\p@}{.75bp}{\cs@subsubsectionfont}}
 \renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
-  {\z@ \@plus 1\p@ \@minus 1\p@}{.3\p@}{\cs@subsubsectionfont}}
+  {\z@ \@plus 1\p@ \@minus 1\p@}{.75bp}{\cs@subsubsectionfont}}
 \renewcommand\subparagraph{\@startsection{subparagraph}{5}{\z@}%
-  {\z@ \@plus 1\p@ \@minus 1\p@}{.3\p@}{\cs@subsubsectionfont}}
+  {\z@ \@plus 1\p@ \@minus 1\p@}{.75bp}{\cs@subsubsectionfont}}
 
 %% ----------------------------------------------------------- title block
 %%   \title{...}  (use \\ for a line break)   \author{...}
@@ -240,25 +267,25 @@
 \gdef\cs@affiliation{}
 \gdef\cs@email{}
 
-\newcommand\cs@titlefont{\sffamily\bfseries\fontsize{18}{22.7}\selectfont}
-\newcommand\cs@authorfont{\sffamily\mdseries\fontsize{12}{20}\selectfont}
-\newcommand\cs@affilfont{\sffamily\mdseries\fontsize{10}{12.6}\selectfont}
-\newcommand\cs@emailfont{\sffamily\mdseries\fontsize{12}{18.5}\selectfont}
+\newcommand\cs@titlefont{\sffamily\bfseries\cs@fontsize{18}{22.7}}
+\newcommand\cs@authorfont{\sffamily\mdseries\cs@fontsize{12}{19.92}}
+\newcommand\cs@affilfont{\sffamily\mdseries\cs@fontsize{10}{12.6}}
+\newcommand\cs@emailfont{\sffamily\mdseries\cs@fontsize{12}{18.5}}
 
 \newcommand\cs@maketitle{%
   \vbox{%
     \hsize\textwidth \linewidth\hsize \parindent\z@ \parskip\z@skip
     \centering
     \let\footnote\@gobble
-    {\cs@titlefont \leavevmode\rule{\z@}{17.1pt}\@title\par}%
+    {\cs@titlefont \leavevmode\rule{\z@}{17.3bp}\@title\par}%
     {\cs@authorfont \@author\par}%
-    \vskip .6pt
+    \vskip .6bp
     \ifx\cs@affiliation\@empty\else{\cs@affilfont \cs@affiliation\par}\fi
     \ifx\cs@email\@empty\else{\cs@emailfont \cs@email\par}\fi
     \vskip \cs@titlegap
   }}
 \newlength{\cs@titlegap}
-\setlength{\cs@titlegap}{0pt}
+\setlength{\cs@titlegap}{25.1bp}
 
 \renewcommand\maketitle{%
   \par
@@ -271,7 +298,7 @@
   \global\let\author\relax}
 
 %% Abstract: unnumbered head (same style as section heads), 9 pt text.
-\renewenvironment{abstract}{\section*{Abstract}}{\par}
+\renewenvironment{abstract}{\section*{\vrule\@height11bp\@width\z@\@depth\z@ Abstract}}{\par}
 
 %% ------------------------------------------------------ floats & captions
 \setcounter{topnumber}{3}
@@ -284,19 +311,19 @@
 \renewcommand\floatpagefraction{.7}
 \renewcommand\dbltopfraction{.9}
 \renewcommand\dblfloatpagefraction{.7}
-\setlength\floatsep{9\p@ \@plus 2\p@ \@minus 2\p@}
-\setlength\textfloatsep{12\p@ \@plus 2\p@ \@minus 4\p@}
-\setlength\intextsep{9\p@ \@plus 2\p@ \@minus 2\p@}
-\setlength\dblfloatsep{9\p@ \@plus 2\p@ \@minus 2\p@}
-\setlength\dbltextfloatsep{12\p@ \@plus 2\p@ \@minus 4\p@}
+\setlength\floatsep{9bp \@plus 2\p@ \@minus 2\p@}
+\setlength\textfloatsep{12bp \@plus 2\p@ \@minus 4\p@}
+\setlength\intextsep{9bp \@plus 2\p@ \@minus 2\p@}
+\setlength\dblfloatsep{9bp \@plus 2\p@ \@minus 2\p@}
+\setlength\dbltextfloatsep{12bp \@plus 2\p@ \@minus 4\p@}
 \setlength\@fptop{0\p@ \@plus 1fil}
 \setlength\@fpsep{8\p@ \@plus 2fil}
 \setlength\@fpbot{0\p@ \@plus 1fil}
 \setlength\@dblfptop{0\p@ \@plus 1fil}
 \setlength\@dblfpsep{8\p@ \@plus 2fil}
 \setlength\@dblfpbot{0\p@ \@plus 1fil}
-\setlength\abovecaptionskip{6\p@}
-\setlength\belowcaptionskip{6\p@}
+\setlength\abovecaptionskip{6bp}
+\setlength\belowcaptionskip{6bp}
 
 \newcommand\cs@capfont{\normalfont\normalsize\bfseries}
 %% "Table" text size; override with \renewcommand{\tablefont}{...}
@@ -324,7 +351,7 @@
 \renewcommand\fnum@table{\tablename~\thetable}
 
 %% Tables: compact spacing; booktabs rules.
-\setlength\tabcolsep{4\p@}
+\setlength\tabcolsep{4bp}
 \renewcommand\arraystretch{1.08}
 \setlength\heavyrulewidth{.8\p@}
 \setlength\lightrulewidth{.4\p@}
@@ -363,22 +390,78 @@
 \newcommand\eqnref[1]{Eq.~(\ref{#1})}
 
 %% -------------------------------------------------------- inline code
-%% \code{omp_set_num_threads} or \code{omp\_set\_num\_threads}: both work.
+%% \code{omp_set_num_threads}: monospaced 8 pt.  Underscores, #, ^, ~, &, $,
+%% < > " | need no escaping; \_ \# \% \& \$ \{ \} are also accepted.
+%% (Not usable inside the argument of \verb or \lstinline.)
 \ExplSyntaxOn
-\str_new:N \l__cs_code_str
+\bool_new:N \l__cs_code_bs_bool      % previous char was a backslash
+\bool_new:N \l__cs_code_hash_bool    % previous char was the first of a ## pair
+\int_new:N  \l__cs_code_p_int        % code of previous printed char
+\int_new:N  \l__cs_code_pp_int       % code of the char before that
+%% print one character.  Preferred break points (penalty 0): after "/" ","
+%% and after a single "_"; elsewhere a discouraged break (penalty 3000) is
+%% allowed so that a long token can never overflow the narrow column.
+\cs_new_protected:Npn \__cs_code_out:N #1 {
+  \int_compare:nNnF { \l__cs_code_p_int } = { 0 }
+    {
+      \bool_if:nTF
+        {
+          \int_compare_p:nNn { `#1 } > { 0 } &&
+          ( \int_compare_p:nNn \l__cs_code_p_int = { 47 } ||
+            \int_compare_p:nNn \l__cs_code_p_int = { 44 } ||
+            ( \int_compare_p:nNn \l__cs_code_p_int = { 95 } &&
+              !\int_compare_p:nNn \l__cs_code_pp_int = { 95 } &&
+              !\int_compare_p:nNn { `#1 } = { 95 } ) )
+        }
+        { \penalty\c_zero_int \scan_stop: }
+        { \penalty 3000 \scan_stop: }
+    }
+  #1
+  \int_set_eq:NN \l__cs_code_pp_int \l__cs_code_p_int
+  \int_set:Nn \l__cs_code_p_int { `#1 }
+}
+\cs_new_protected:Npn \__cs_code_char:N #1 {
+  \str_if_eq:nnTF {#1} { ~ }
+    {
+      \bool_if:NT \l__cs_code_bs_bool { \__cs_code_out:N \c_backslash_str }
+      \bool_set_false:N \l__cs_code_bs_bool
+      \ 
+      \int_set_eq:NN \l__cs_code_pp_int \l__cs_code_p_int
+      \int_set:Nn \l__cs_code_p_int { 32 }
+    }
+    {
+      \bool_if:NTF \l__cs_code_bs_bool
+        {
+          \bool_set_false:N \l__cs_code_bs_bool
+          \int_case:nnF { `#1 }
+            { { 95 } { } { 35 } { } { 37 } { } { 38 } { } { 36 } { } { 123 } { } { 125 } { } }
+            { \__cs_code_out:N \c_backslash_str }
+          \__cs_code_out:N #1
+        }
+        {
+          \int_compare:nNnTF { `#1 } = { 92 }
+            { \bool_set_true:N \l__cs_code_bs_bool }
+            {
+              \int_compare:nNnTF { `#1 } = { 35 }
+                {
+                  \bool_if:NTF \l__cs_code_hash_bool
+                    { \bool_set_false:N \l__cs_code_hash_bool }
+                    { \bool_set_true:N \l__cs_code_hash_bool \__cs_code_out:N #1 }
+                }
+                { \__cs_code_out:N #1 }
+            }
+        }
+    }
+}
 \DeclareRobustCommand \code [1] {
   \group_begin:
-    \str_set:Nn \l__cs_code_str {#1}
-    \str_replace_all:Nnn \l__cs_code_str { \_ } { _ }
-    \str_replace_all:Nnn \l__cs_code_str { \# } { # }
-    \str_replace_all:Nnn \l__cs_code_str { \% } { % }
-    \str_replace_all:Nnn \l__cs_code_str { \& } { & }
-    \str_replace_all:Nnn \l__cs_code_str { \$ } { $ }
-    \str_replace_all:Nnn \l__cs_code_str { \{ } { \c_left_brace_str }
-    \str_replace_all:Nnn \l__cs_code_str { \} } { \c_right_brace_str }
-    \str_replace_all:Nnn \l__cs_code_str { ## } { # }
-    \ttfamily \mdseries \fontsize{8}{10.35} \selectfont
-    \l__cs_code_str
+    \bool_set_false:N \l__cs_code_bs_bool
+    \bool_set_false:N \l__cs_code_hash_bool
+    \int_zero:N \l__cs_code_p_int
+    \int_zero:N \l__cs_code_pp_int
+    \ttfamily \mdseries \fontsize{8.03}{10.3888}\selectfont
+    \str_map_function:nN {#1} \__cs_code_char:N
+    \bool_if:NT \l__cs_code_bs_bool { \c_backslash_str }
   \group_end:
 }
 \ExplSyntaxOff
@@ -388,9 +471,8 @@
 \definecolor{cs@cm}{gray}{0.40}
 \definecolor{cs@st}{rgb}{0.45,0.12,0.12}
 \lstdefinestyle{cs259}{%
-  basicstyle=\ttfamily\mdseries\fontsize{7.5}{8.7}\selectfont,
+  basicstyle=\ttfamily\mdseries\cs@fontsize{7.5}{8.7},
   keywordstyle=\color{cs@kw},
-  directivestyle=\color{cs@kw},
   commentstyle=\itshape\color{cs@cm},
   stringstyle=\color{cs@st},
   identifierstyle=\color{black},
@@ -400,8 +482,7 @@
   tabsize=2,
   breaklines=true,
   breakatwhitespace=false,
-  prebreak=\mbox{\textcolor{cs@cm}{\tiny\ensuremath{\hookleftarrow}}},
-  postbreak=\mbox{\textcolor{cs@cm}{\tiny\ensuremath{\hookrightarrow}}\space},
+  postbreak=\mbox{\textcolor{cs@cm}{\tiny\ensuremath{\rightarrow}}\space},
   frame=tb,
   framerule=.4pt,
   rulecolor=\color{cs@cm},
@@ -438,14 +519,14 @@
   \section{References}%
   \list{\@biblabel{\@arabic\c@enumiv}}%
     {\settowidth\labelwidth{\@biblabel{99}}%
-     \setlength\leftmargin{18\p@}%
-     \setlength\labelsep{2\p@}%
-     \setlength\labelwidth{16\p@}%
+     \setlength\leftmargin{18bp}%
+     \setlength\labelsep{2bp}%
+     \setlength\labelwidth{16bp}%
      \setlength\itemindent{\z@}%
      \setlength\topsep{\z@}%
      \setlength\partopsep{\z@}%
      \setlength\parsep{\z@}%
-     \setlength\itemsep{4\p@ \@plus 1\p@ \@minus .5\p@}%
+     \setlength\itemsep{4bp \@plus 2\p@ \@minus 1\p@}%
      \usecounter{enumiv}%
      \let\p@enumiv\@empty
      \renewcommand\theenumiv{\@arabic\c@enumiv}}%
@@ -460,7 +541,10 @@
 \RequirePackage[hidelinks,bookmarks=false,pdfborder={0 0 0},%
   breaklinks=true,unicode=true]{hyperref}
 \urlstyle{same}
-\AtBeginDocument{\Urlmuskip=0mu plus 1mu\relax}
+%% URLs may break after / . ? = & - ; a break after ":" (as in "https:") is
+%% strongly discouraged by a high penalty.
+\AtBeginDocument{\Urlmuskip=0mu plus 1mu\relax
+  \mathchardef\UrlBigBreakPenalty=5000\relax}
 
 %% ---------------------------------------- balance the last page's columns
 \ifcs@balance

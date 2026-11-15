@@ -1,0 +1,70 @@
+%% main.tex -- CS 259 term paper (cs259.cls reproduces the course template)
+%% Compile with pdfLaTeX + BibTeX (Overleaf default); see README_OVERLEAF.md.
+\documentclass{cs259}
+%% \documentclass[siunitx]{cs259}   % uncomment to use \SI{}{} and \num{}
+
+\graphicspath{{figures/}}
+\hypersetup{
+  pdftitle  = {Performance Evaluation of Hybrid CPU-GPU Parallelism for Deep Learning Using OpenMP and CUDA},
+  pdfauthor = {Sunnihith Reddy Induru}}
+
+\title{Performance Evaluation of Hybrid CPU-GPU Parallelism\\
+       for Deep Learning Using OpenMP and CUDA}
+\author{Sunnihith Reddy Induru}
+\affiliation{Computer Science Department\\
+             San Jose State University\\
+             San Jose, CA 95192}
+\email{sunnihithreddy.induru@sjsu.edu}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO: 150--200 words: problem, approach (serial, OpenMP, CUDA, hybrid
+% OpenMP-CUDA), workload, main quantitative findings, take-away.
+Abstract placeholder.
+\end{abstract}
+
+\section{Introduction}
+% TODO: motivation, research questions, contributions, paper outline.
+
+\section{Background and Related Work}
+% TODO: OpenMP, CUDA, hybrid CPU-GPU execution, related studies.
+
+\section{Workload and Dataset}
+% TODO: network architecture, dataset, batch sizes, operation counts.
+
+\section{Implementations}
+\subsection{Serial CPU}
+% TODO
+\subsection{OpenMP}
+% TODO
+\subsection{CUDA}
+% TODO
+\subsection{Hybrid OpenMP-CUDA}
+% TODO
+
+\section{Experimental Methodology}
+% TODO: hardware/software, timing method, repetitions, metrics.
+% Table helper (wide): \begin{widetable}{Caption.}{tab:label} ... \end{widetable}
+% Figure helper (col): \colfigure{file.pdf}{Caption.}{fig:label}
+
+\section{Correctness Validation}
+% TODO: comparison against the serial reference, tolerances.
+
+\section{Results}
+% TODO
+
+\section{Discussion}
+% TODO
+
+\section{Limitations and Threats to Validity}
+% TODO
+
+\section{Conclusion and Future Work}
+% TODO
+
+\bibliographystyle{cs259}
+\bibliography{refs}   % refs.bib; entries appear only if cited with \cite{key}
+
+\end{document}
