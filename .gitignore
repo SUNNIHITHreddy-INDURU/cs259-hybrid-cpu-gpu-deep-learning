@@ -32,3 +32,4 @@ data/*-ubyte
 .env
 kaggle.json
 build_bundle/
+node_modules/

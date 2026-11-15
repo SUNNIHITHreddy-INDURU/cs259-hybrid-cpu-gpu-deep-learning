@@ -58,7 +58,7 @@ class Style:
 
 
 PAPER = Style("paper", 3.33, 7.0, 7.5, False, 300, 1.1)
-SLIDE = Style("slides", 6.4, 12.0, 13, True, 200, 2.2)
+SLIDE = Style("slides", 5.4, 9.2, 11.5, True, 220, 2.0)
 STYLES = (PAPER, SLIDE)
 
 
