@@ -1,1 +1,62 @@
-TODO
+All times are the mean end-to-end time of one pass over 10{,}000 images, in milliseconds (ms), from \val{Sp:runs} recorded passes per configuration on the Spartan node unless the Apple M4 is named. Batch sizes are given in images per batch; ``$S$'' is speedup over the serial code on the same machine and batch size, and ``$E$'' is efficiency $S/p$. Speedups are in multiples ($\times$).
+
+\subsection{OpenMP scalability (RQ1)}
+On the Xeon the speedup is close to linear for batches of 32 images or more (Figure~\ref{fig:omp}, Table~\ref{tab:omp}). With 24 threads the speedup is \val{Sp:omp:speedup:4096:24}$\times$ at batch 4096 (efficiency \val{Sp:omp:eff:4096:24}) and \val{Sp:omp:speedup:256:24}$\times$ at batch 256 (efficiency \val{Sp:omp:eff:256:24}). With one image per batch the best result is \val{Sp:omp:best:speedup:1}$\times$ with \val{Sp:omp:best:thr:1} threads, and the efficiency at 24 threads falls to \val{Sp:omp:eff:1:24}: a batch of one image offers only 16 work items per stage and each stage ends in a barrier. OpenMP with one thread needs \val{Sp:omp:e2e:256:1}\,ms against \val{Sp:serial:e2e:256}\,ms for the serial code (batch 256), so the OpenMP runtime adds no measurable cost.
+
+The Apple M4 behaves differently. The speedup follows the ideal line up to its four performance cores (\val{Mac:omp:speedup:4096:4}$\times$ with 4 threads at batch 4096) and then flattens to \val{Mac:omp:speedup:4096:10}$\times$ with 10 threads (efficiency \val{Mac:omp:eff:4096:10}); the dotted line in Figure~\ref{fig:omp} marks the four performance cores. With one image per batch OpenMP is \emph{slower} than serial on the M4 for every thread count above one: \val{Mac:omp:speedup:1:2}$\times$ with 2 threads and \val{Mac:omp:speedup:1:10}$\times$ with 10 threads. In absolute terms the serial pass takes \val{Mac:serial:e2e:4096}\,ms on the M4 and \val{Sp:serial:e2e:4096}\,ms on one Xeon core, which is \val{X:serial:SpOverMac:4096}$\times$ longer.
+
+\widefigure{omp_combined.pdf}{OpenMP speedup over serial (top) and parallel efficiency (bottom) versus thread count, for four batch sizes, on the Apple M4 (left) and the Xeon (right). The dashed lines are ideal scaling; the dotted line marks the four performance cores of the M4.}{fig:omp}
+
+\begin{widetable}{OpenMP scaling on the Spartan node: time per pass (ms), speedup $S$ over serial ($\times$) and efficiency $E=S/p$ for three batch sizes.}{tab:omp}
+\input{tables/omp_spartan}
+\end{widetable}
+
+\subsection{CPU versus GPU (RQ2, RQ3)}
+Table~\ref{tab:cpugpu} and Figures~\ref{fig:exec} and~\ref{fig:kernel} compare all implementations on the Spartan node. The serial and OpenMP times hardly depend on the batch size: the serial pass takes \val{Sp:serial:e2e:1}\,ms with batch 1 and \val{Sp:serial:e2e:4096}\,ms with batch 4096, because every image is processed independently by the same loops. The GPU depends strongly on the batch size: CUDA-only falls from \val{Sp:cuda:e2e:1}\,ms (batch 1) to \val{Sp:cuda:e2e:4096}\,ms (batch 4096).
+
+With one image per batch the GPU is slower than serial (\val{Sp:cuda:speedup:1}$\times$): each of the 10{,}000 batches needs three kernel launches, two copies and a synchronisation, and the kernels alone take \val{Sp:cuda:kernel:1}\,ms per pass, \val{Sp:cuda:kus:1}\,$\mu$s per batch. From batch 8 on CUDA is faster than serial, reaching \val{Sp:cuda:speedup:4096}$\times$ end-to-end at batch 4096. The kernel-only speedup is much larger, \val{Sp:cuda:kspeedup:4096}$\times$ at batch 4096, about twice the end-to-end speedup; the two numbers answer different questions (Section~\ref{sec:method}).
+
+Against the best OpenMP configuration, CUDA-only is slower for batches up to 64, level at batch 128 (\val{Sp:cuda:e2e:128}\,ms against \val{Sp:omp:best:e2e:128}\,ms) and ahead from batch 256 (\val{Sp:cuda:e2e:256}\,ms against \val{Sp:omp:best:e2e:256}\,ms); at batch 4096 it is only \val{Sp:cuda:vscpu:4096}$\times$ faster than 24-thread OpenMP. Counting the 406{,}528 floating-point operations per image, a pass at batch 4096 reaches \val{Sp:serial:gflops:4096}\,GFLOP/s serial, \val{Sp:omp:best:gflops:4096}\,GFLOP/s with OpenMP, \val{Sp:cuda:gflops:4096}\,GFLOP/s for CUDA end-to-end and \val{Sp:cuda:kgflops:4096}\,GFLOP/s for the CUDA kernels alone.
+
+\begin{widetable}{All implementations on the Spartan node: mean time per pass (ms) and speedup over serial ($\times$). OpenMP and Hybrid show the best of the tested thread counts (in brackets). The kernel-only column excludes preprocessing and copies.}{tab:cpugpu}
+\input{tables/cpu_vs_gpu}
+\end{widetable}
+
+\colfigure{exec_time_spartan_k40_native.pdf}{End-to-end time per pass (ms, log scale) versus batch size for the four implementations. Error bars are 95\,\% confidence intervals (smaller than the markers).}{fig:exec}
+
+\widefigure{cuda_kernel_vs_e2e_spartan_k40_native.pdf}{CUDA-only: kernel-only time against end-to-end time (left, ms) and the corresponding speedups over serial (right, $\times$). Kernel-only numbers exclude preprocessing, copies and launch overhead.}{fig:kernel}
+
+\subsection{Transfer overhead (RQ4)}
+Table~\ref{tab:breakdown} and Figure~\ref{fig:breakdown} split the CUDA-only pass into stages. The two copies take \val{Sp:cuda:tshare:1}\,\% of the end-to-end time at batch 1 and \val{Sp:cuda:tshare:4096}\,\% at batch 4096. The host-to-device copy of the 31.4\,MB takes \val{Sp:cuda:h2d:4096}\,ms at batch 4096, which is \val{Sp:cuda:h2dgbs:4096}\,GB/s and agrees with the \val{Sp:micro:h2d_pageable_bandwidth:0}\,GB/s measured separately for pageable memory (Table~\ref{tab:micro}); pinned memory reaches \val{Sp:micro:h2d_pinned_bandwidth:0}\,GB/s.
+
+At large batches the bigger non-GPU cost is the single-threaded preprocessing, which takes a constant \val{Sp:cuda:pre:4096}\,ms per pass. Its share of the end-to-end time grows from \val{Sp:cuda:preshare:1}\,\% at batch 1 to \val{Sp:cuda:preshare:4096}\,\% at batch 4096, while the kernels fall from \val{Sp:cuda:kshare:1}\,\% to \val{Sp:cuda:kshare:4096}\,\%. At batch 1 the launch, API and synchronisation overhead (column ``Other'') is \val{Sp:cuda:otherms:1}\,ms per pass, \val{Sp:cuda:othershare:1}\,\% of the total, and it vanishes for large batches. This is why the end-to-end speedup stays well below the kernel-only speedup.
+
+\colfigure{transfer_breakdown_spartan_k40_native.pdf}{Share of the CUDA-only end-to-end time spent in each stage (\%) versus batch size.}{fig:breakdown}
+
+\begin{widetable}{CUDA-only time per pass by stage on the Spartan node (ms). ``Other'' is the part of the wall-clock time not covered by the four timed stages (launch, API calls, synchronisation).}{tab:breakdown}
+\input{tables/cuda_breakdown}
+\end{widetable}
+
+\begin{coltable}{Platform limits measured by micro-benchmarks.}{tab:micro}
+\input{tables/micro}
+\end{coltable}
+
+\subsection{Hybrid OpenMP--CUDA (RQ5)}
+Figure~\ref{fig:hybrid} and Table~\ref{tab:hybrid} compare OpenMP-only, CUDA-only and the two hybrid variants. The pipelined hybrid is faster than CUDA-only at every batch size: \val{Sp:hyb:vscuda:1}$\times$ at batch 1, \val{Sp:hyb:vscuda:32}$\times$ at batch 32 and \val{Sp:hyb:vscuda:4096}$\times$ at batch 4096. Welch's $t$-test gives $p\le$ \val{Sp:test:hyb-cuda:maxp} for every batch size, and the 95\,\% bootstrap interval of the time ratio at batch 4096 is \val{Sp:test:hyb-cuda:cilo:4096} to \val{Sp:test:hyb-cuda:cihi:4096}. Against the best OpenMP configuration the hybrid is faster from batch \val{Sp:hyb:crossover} on, \val{Sp:hyb:vscpu:4096}$\times$ at batch 4096. At batch 1 and batch 8 OpenMP alone is faster (\val{Sp:omp:best:e2e:1}\,ms against \val{Sp:hyb:best:e2e:1}\,ms at batch 1). CUDA-only was not the fastest implementation at any batch size (Table~\ref{tab:best}).
+
+Two ingredients contribute to the hybrid gain. Parallel preprocessing alone (hybrid-sequential) gives \val{Sp:hseq:vscuda:4096}$\times$ over CUDA-only at batch 4096, and overlapping the stages adds another \val{Sp:hyb:vshseq:4096}$\times$. Even with a single preprocessing thread, pipelining with pinned memory gives \val{Sp:hyb:vscuda1:4096}$\times$. At batch 4096 the hybrid pass takes \val{Sp:hyb:best:e2e:4096}\,ms, only \val{Sp:hyb:vskernel:4096}$\times$ the kernel-only time of the CUDA-only version (\val{Sp:cuda:kernel:4096}\,ms): preprocessing and copies are almost completely hidden behind the kernels, so the GPU computation is again the bottleneck. Because the GPU stages overlap in the pipelined hybrid, only its end-to-end time is meaningful.
+
+\widefigure{hybrid_compare_spartan_k40_native.pdf}{Left: end-to-end time per pass (ms, log scale) of OpenMP-only, CUDA-only and both hybrid variants (best thread count). Right: speedup of the two hybrid variants over CUDA-only ($\times$).}{fig:hybrid}
+
+\begin{widetable}{Hybrid ablation on the Spartan node: time per pass (ms), speedup ($\times$) and significance. Thread counts of the best configuration are in brackets.}{tab:hybrid}
+\fitwide{\input{tables/hybrid_ablation}}
+\end{widetable}
+
+\begin{coltable}{Fastest implementation per batch size (time per pass in ms; gap = second fastest / fastest).}{tab:best}
+\fitcol{\input{tables/best_choice}}
+\end{coltable}
+
+\subsection{CUDA block size}
+The block size of the hidden-layer kernel matters only for small batches (Figure~\ref{fig:block}). At batch 64 the kernels take \val{Sp:cuda:blk8:kernel:64}\,ms with 8$\times$8 blocks, \val{Sp:cuda:blk16:kernel:64}\,ms with 16$\times$16 and \val{Sp:cuda:blk32:kernel:64}\,ms with 32$\times$32 blocks. At batch 4096 the three differ by less than 1\,\% (\val{Sp:cuda:blk8:kernel:4096}, \val{Sp:cuda:blk16:kernel:4096} and \val{Sp:cuda:blk32:kernel:4096}\,ms). A 32$\times$32 block at batch 32 launches only 8 thread blocks for the 15 multiprocessors of the K40m, consistent with its slower result (\val{Sp:cuda:blk32:kernel:32}\,ms against \val{Sp:cuda:blk8:kernel:32}\,ms for 8$\times$8).
+
+\colfigure{cuda_block_size_spartan_k40_native.pdf}{CUDA kernel time per pass (ms, log scale) for three thread-block sizes of the hidden-layer kernel.}{fig:block}

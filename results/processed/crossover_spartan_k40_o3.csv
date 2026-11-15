@@ -1,0 +1,9 @@
+platform,batch,best_cpu_ms,best_cpu_config,best_cuda_ms,cuda_beats_cpu
+spartan_k40_o3,1,158.41912335,openmp/16thr,1497.0347598,False
+spartan_k40_o3,8,77.01229615000001,openmp/24thr,216.337866,False
+spartan_k40_o3,32,64.47449705000001,openmp/24thr,78.342861,False
+spartan_k40_o3,64,62.6558761,openmp/24thr,62.02243745,True
+spartan_k40_o3,128,61.38992385,openmp/24thr,54.2969514,True
+spartan_k40_o3,256,61.13948309999999,openmp/24thr,49.7355313,True
+spartan_k40_o3,1024,60.975938,openmp/24thr,44.17394740000001,True
+spartan_k40_o3,4096,61.07367040000001,openmp/24thr,42.618052,True

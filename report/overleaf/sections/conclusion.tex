@@ -1,1 +1,13 @@
-TODO
+We implemented one MNIST inference workload four ways---serial, OpenMP, CUDA, and a hybrid OpenMP--CUDA pipeline---verified that they agree (largest logit difference \val{Sp:val:cuda:maxerr}, identical predictions), and measured them with \val{Sp:runs} passes per configuration. The main findings are:
+
+\begin{itemize}
+\item \textbf{RQ1.} OpenMP reaches \val{Sp:omp:speedup:4096:24}$\times$ over serial with 24 threads on the Xeon (batch 4096, efficiency \val{Sp:omp:eff:4096:24}), but only \val{Mac:omp:speedup:4096:10}$\times$ with 10 threads on the M4, and it loses to serial for single images on the M4.
+\item \textbf{RQ2, RQ3.} CUDA is \val{Sp:cuda:speedup:4096}$\times$ faster than serial end-to-end at batch 4096 but \val{Sp:cuda:speedup:1}$\times$ (slower) at batch 1; its kernel-only speedup (\val{Sp:cuda:kspeedup:4096}$\times$) is twice the end-to-end speedup. It overtakes the best OpenMP configuration only for batches of about 128 to 256 images or more.
+\item \textbf{RQ4.} The copies take \val{Sp:cuda:tshare:4096}\,\% to \val{Sp:cuda:tshare:1}\,\% of the CUDA time; the single-threaded preprocessing (up to \val{Sp:cuda:preshare:4096}\,\%) is the larger overhead for big batches.
+\item \textbf{RQ5.} The pipelined hybrid needs \val{Sp:hyb:best:e2e:4096}\,ms at batch 4096, \val{Sp:hyb:vscuda:4096}$\times$ faster than CUDA-only and \val{Sp:hyb:vscpu:4096}$\times$ faster than the best OpenMP; it is fastest from batch \val{Sp:hyb:crossover} on, while OpenMP is fastest for batches of 1 and 8.
+\item \textbf{RQ6.} The fitted Amdahl serial fraction is \val{Sp:amdahl:f:4096} at batch 4096 on the Xeon but \val{Sp:amdahl:f:1} for single images, and synchronisation cost against work per batch explains the different behaviour of the Xeon and the M4.
+\end{itemize}
+
+The answer to ``which is best'' therefore depends on the batch size: multicore OpenMP for tiny batches, and a hybrid that overlaps CPU preprocessing with GPU transfer and compute for larger ones; a GPU used naively (synchronous, single-threaded preprocessing) is never the best choice here. Future work includes tiled and library-based kernels (cuBLAS), newer GPUs, larger and convolutional networks, GPU-side preprocessing, splitting one batch across CPU and GPU, and energy measurements.
+
+\textbf{Availability.} The code, raw measurements, analysis scripts and the sources of this paper are in a private repository and in the accompanying Overleaf project (folder \texttt{code}).

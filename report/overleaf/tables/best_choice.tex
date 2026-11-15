@@ -1,0 +1,15 @@
+\begin{tabular}{rlrlrr}
+\toprule
+Batch & Fastest & Time & Second fastest & Time & Gap \\
+ & implementation & (ms) & implementation & (ms) & ($\times$) \\
+\midrule
+1 & OpenMP & 162.8 & Hybrid-pipelined & 650.9 & 4.00 \\
+8 & OpenMP & 75.5 & Hybrid-pipelined & 87.5 & 1.16 \\
+32 & Hybrid-pipelined & 33.3 & OpenMP & 61.9 & 1.86 \\
+64 & Hybrid-pipelined & 27.9 & OpenMP & 59.2 & 2.12 \\
+128 & Hybrid-pipelined & 26.5 & OpenMP & 58.2 & 2.20 \\
+256 & Hybrid-pipelined & 26.0 & CUDA-only & 55.1 & 2.12 \\
+1024 & Hybrid-pipelined & 25.2 & CUDA-only & 48.3 & 1.92 \\
+4096 & Hybrid-pipelined & 24.7 & CUDA-only & 46.7 & 1.89 \\
+\bottomrule
+\end{tabular}
