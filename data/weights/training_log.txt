@@ -1,0 +1,11 @@
+epoch  1  train_loss 0.23413
+epoch  2  train_loss 0.09262
+epoch  3  train_loss 0.06195
+epoch  4  train_loss 0.04396
+epoch  5  train_loss 0.03180
+epoch  6  train_loss 0.02390
+epoch  7  train_loss 0.02035
+epoch  8  train_loss 0.01575
+epoch  9  train_loss 0.01300
+epoch 10  train_loss 0.01383
+final test accuracy (10000 images, float32 NumPy): 97.97%

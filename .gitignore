@@ -1,0 +1,33 @@
+# build output
+build/
+*.o
+*.d
+bin/
+# python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+# OS / editor
+.DS_Store
+.vscode/
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+# datasets (downloaded by data/download_mnist.py, verified by checksum)
+data/raw/
+data/*.gz
+data/*-ubyte
+# credentials - never commit
+*.pem
+*.key
+*.token
+.env
+kaggle.json
