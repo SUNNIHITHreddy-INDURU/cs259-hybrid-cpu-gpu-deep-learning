@@ -15,7 +15,7 @@ import pandas as pd
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 
 import analyze_results as ar
-from style import COLOR, LABEL, LSTYLE, MARKER, STYLES, log2_axis
+from style import COLOR, LABEL, LSTYLE, MARKER, STYLES, log2_axis, pn
 
 DEFAULT_BLOCK = 16
 
@@ -61,7 +61,7 @@ def fig_exec_time(st, S, plat):
     ax.set_xlabel("Batch size (images per batch)")
     ax.set_ylabel("End-to-end time for 10,000 images (ms)")
     ax.legend(loc="best")
-    st.save(fig, f"exec_time_{plat}", f"Execution time vs batch size ({plat})")
+    st.save(fig, f"exec_time_{plat}", f"Execution time vs batch size ({pn(plat)})")
 
 
 def fig_throughput(st, S, plat):
@@ -78,7 +78,7 @@ def fig_throughput(st, S, plat):
     ax.set_xlabel("Batch size (images per batch)")
     ax.set_ylabel("Throughput (images / s)")
     ax.legend(loc="best")
-    st.save(fig, f"throughput_{plat}", f"Throughput vs batch size ({plat})")
+    st.save(fig, f"throughput_{plat}", f"Throughput vs batch size ({pn(plat)})")
 
 
 # ---------------------------------------------------------------------------------- figures 4,5,6,13
@@ -122,7 +122,7 @@ def fig_omp_scaling(st, S, plat):
         _p_core_marker(ax, S)
         ax.legend(loc="best", ncol=1)
         st.save(fig, f"omp_{kind}_{plat}", {"time": "OpenMP execution time vs threads", "speedup": "OpenMP speedup vs threads",
-                                           "efficiency": "OpenMP efficiency vs threads"}[kind] + f" ({plat})")
+                                           "efficiency": "OpenMP efficiency vs threads"}[kind] + f" ({pn(plat)})")
 
 
 def fig_amdahl(st, S, plat):
@@ -147,7 +147,7 @@ def fig_amdahl(st, S, plat):
     ax.set_xlabel("OpenMP threads")
     ax.set_ylabel("Speedup over serial (x)")
     ax.legend(loc="upper left")
-    st.save(fig, f"amdahl_fit_{plat}", f"Measured speedup and fitted Amdahl curves ({plat})")
+    st.save(fig, f"amdahl_fit_{plat}", f"Measured speedup and fitted Amdahl curves ({pn(plat)})")
 
 
 # ---------------------------------------------------------------------------------- figures 7,8,9,12
@@ -179,7 +179,7 @@ def fig_kernel_vs_e2e(st, S, plat):
     b.set_ylabel("Speedup over serial CPU (x)")
     b.set_ylim(top=b.get_ylim()[1] * 3)
     b.legend(loc="upper left")
-    st.save(fig, f"cuda_kernel_vs_e2e_{plat}", f"CUDA: kernel-only vs end-to-end ({plat})")
+    st.save(fig, f"cuda_kernel_vs_e2e_{plat}", f"CUDA: kernel-only vs end-to-end ({pn(plat)})")
 
 
 def fig_transfer(st, S, plat):
@@ -205,7 +205,7 @@ def fig_transfer(st, S, plat):
     ax.set_xlabel("Batch size")
     ax.set_ylabel("Share of end-to-end time (%)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2)
-    st.save(fig, f"transfer_breakdown_{plat}", f"CUDA time breakdown by stage ({plat})")
+    st.save(fig, f"transfer_breakdown_{plat}", f"CUDA time breakdown by stage ({pn(plat)})")
 
 
 def fig_hybrid(st, S, plat):
@@ -238,7 +238,7 @@ def fig_hybrid(st, S, plat):
     b.set_ylabel("Speedup over CUDA-only (x)")
     b.set_ylim(0, b.get_ylim()[1] * 1.3)
     b.legend(loc="upper left", ncol=1)
-    st.save(fig, f"hybrid_compare_{plat}", f"Hybrid vs non-hybrid execution ({plat})")
+    st.save(fig, f"hybrid_compare_{plat}", f"Hybrid vs non-hybrid execution ({pn(plat)})")
 
 
 def fig_blocksize(st, S, plat):

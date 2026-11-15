@@ -73,3 +73,11 @@ def log2_axis(ax, values, which="x"):
         ax.set_yscale("log", base=2)
         ax.set_yticks(values)
         ax.set_yticklabels([str(v) for v in values])
+
+
+PLAT_NAME = {"spartan_k40_native": "Spartan node: Tesla K40m + Xeon E5-2680 v4", "spartan_k40_o3": "Spartan node, plain -O3",
+             "mac_m4": "Apple M4"}
+
+
+def pn(plat):
+    return PLAT_NAME.get(plat, plat)
