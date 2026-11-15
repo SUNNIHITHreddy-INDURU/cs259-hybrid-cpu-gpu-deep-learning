@@ -28,7 +28,7 @@ NVCC ?= nvcc
 # compute capability of the first GPU, e.g. 7.5 -> 75 (falls back to 75 if it cannot be queried)
 CUDA_ARCH ?= $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null | head -1 | tr -d '. \r' | grep -E '^[0-9]+$$' || echo 75)
 NVCCFLAGS := -O3 $(STD) -Iinclude -arch=sm_$(CUDA_ARCH) -DUSE_CUDA -Wno-deprecated-gpu-targets \
-             -Xcompiler "-fopenmp -O3 -Wall"
+             -Xcompiler -fopenmp,-O3,-Wall
 
 .PHONY: all cpu gpu test clean
 all: cpu

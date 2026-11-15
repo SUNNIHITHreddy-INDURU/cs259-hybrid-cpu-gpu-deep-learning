@@ -31,3 +31,4 @@ data/*-ubyte
 *.token
 .env
 kaggle.json
+build_bundle/

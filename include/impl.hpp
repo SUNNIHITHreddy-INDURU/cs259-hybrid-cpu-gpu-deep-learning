@@ -33,6 +33,8 @@ CpuMicro cpu_microbench(int threads);  // src/openmp/openmp_nn.cpp
 // Implementations 3 and 4 - CUDA and hybrid OpenMP-CUDA (src/cuda, src/hybrid).
 class CudaRunner {
  public:
+  struct Impl;  // defined in src/cuda/cuda_internal.cuh (kept out of this header on purpose)
+
   // max_batch: largest batch that will be used; block_dim: layer-1 thread block is block_dim x block_dim.
   CudaRunner(const Weights& w, int max_batch, int block_dim);
   ~CudaRunner();
@@ -56,7 +58,6 @@ class CudaRunner {
   double setup_upload_ms() const;    // one-time weight upload
 
  private:
-  struct Impl;
   std::unique_ptr<Impl> p_;
 };
 
