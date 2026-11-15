@@ -28,6 +28,8 @@ def fmt(x, nd=2):
     if isinstance(x, (float, np.floating)):
         if np.isnan(x):
             return "--"
+        if x == 0:
+            return "0"
         if x != 0 and abs(x) < 0.01:
             return f"{x:.1e}".replace("e-0", "e-").replace("e+0", "e+")
         return f"{x:,.{nd}f}" if abs(x) < 1000 else f"{x:,.0f}"
@@ -121,18 +123,20 @@ def main():
                         r["p (Welch)"] = float(q.p_value.iloc[0])
                 rows.append(r)
             write(pd.DataFrame(rows), f"hybrid_ablation_{plat}")
-    # ---- correctness
+    # ---- correctness (one table per platform)
     files = sorted(ar.RAW.glob("*_validation.csv"))
     if files:
         v = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
         v["comparison"] = v.comparison.str.replace(r" \(s=\d\)", "", regex=True)
-        rows = []
-        for (plat, cmp_), g in v.groupby(["platform", "comparison"], sort=False):
-            rows.append({"Platform": plat, "Comparison": cmp_, "Configs": len(g), "Max abs error": g.max_abs_err.max(),
-                         "Mean abs error": g.mean_abs_err.mean(), "Min agreement %": g.pred_agreement.min() * 100,
-                         "Accuracy %": f"{g.accuracy.min() * 100:.2f}" if g.accuracy.min() == g.accuracy.max() else f"{g.accuracy.min() * 100:.2f}-{g.accuracy.max() * 100:.2f}",
-                         "Pass": f"{int((g['pass'] == 'PASS').sum())}/{len(g)}"})
-        write(pd.DataFrame(rows), "correctness", "llrrrrrr")
+        for plat, gp in v.groupby("platform"):
+            rows = []
+            for cmp_, g in gp.groupby("comparison", sort=False):
+                rows.append({"Comparison": cmp_.replace("Serial float32 vs NumPy float64", "Serial vs NumPy (float64)"), "Configs": len(g),
+                             "Max abs err": g.max_abs_err.max(), "Mean abs err": g.mean_abs_err.max(),
+                             "Agree %": g.pred_agreement.min() * 100,
+                             "Acc %": "--" if "NumPy" in cmp_ else (f"{g.accuracy.min() * 100:.2f}" if g.accuracy.min() == g.accuracy.max() else f"{g.accuracy.min() * 100:.2f}-{g.accuracy.max() * 100:.2f}"),
+                             "Pass": f"{int((g['pass'] == 'PASS').sum())}/{len(g)}"})
+            write(pd.DataFrame(rows), f"correctness_{plat}", "lrrrrrr")
     # ---- micro-benchmarks
     mf = sorted(ar.RAW.glob("*_micro.csv"))
     if mf:

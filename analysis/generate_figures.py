@@ -261,7 +261,7 @@ def fig_blocksize(st, S, plat):
 
 # ---------------------------------------------------------------------------------- figure 11
 def fig_correctness(st, plat_label="all"):
-    files = sorted(ar.RAW.glob("*_validation.csv"))
+    files = [f for f in sorted(ar.RAW.glob("*_validation.csv")) if ("mac_m4" in f.name or "spartan_k40_native" in f.name or "FAKE" in f.name)]
     if not files:
         return
     v = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)

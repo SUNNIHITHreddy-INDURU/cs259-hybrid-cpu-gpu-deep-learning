@@ -1,0 +1,7 @@
+Comparison,Configs,Max abs err,Mean abs err,Agree %,Acc %,Pass
+Serial vs NumPy (float64),1,9.34601e-05,1.7433e-05,100,--,1/1
+Serial batch-invariance,3,0.0,0.0,100,97.97,3/3
+Serial vs OpenMP,16,0.0,0.0,100,97.97,16/16
+Serial vs CUDA,12,7.62939e-06,4.99509e-07,100,97.97,12/12
+Serial vs Hybrid-sequential,16,7.62939e-06,4.99509e-07,100,97.97,16/16
+Serial vs Hybrid-pipelined,32,7.62939e-06,4.99509e-07,100,97.97,32/32

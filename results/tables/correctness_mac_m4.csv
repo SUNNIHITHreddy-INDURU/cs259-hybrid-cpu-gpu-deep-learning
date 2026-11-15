@@ -1,0 +1,4 @@
+Comparison,Configs,Max abs err,Mean abs err,Agree %,Acc %,Pass
+Serial vs NumPy (float64),1,9.15527e-05,1.74197e-05,100,--,1/1
+Serial batch-invariance,3,0.0,0.0,100,97.97,3/3
+Serial vs OpenMP,16,0.0,0.0,100,97.97,16/16

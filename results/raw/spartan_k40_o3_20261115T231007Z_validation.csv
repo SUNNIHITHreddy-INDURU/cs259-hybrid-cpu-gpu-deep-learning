@@ -1,0 +1,81 @@
+platform,comparison,impl,batch,threads,block,max_abs_err,mean_abs_err,pred_agreement,accuracy,pass
+spartan_k40_o3,Serial float32 vs NumPy float64,serial,256,1,0,9.34601e-05,1.74352e-05,1,1,PASS
+spartan_k40_o3,Serial batch-invariance,serial,1,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial batch-invariance,serial,37,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial batch-invariance,serial,4096,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,1,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,1,2,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,1,4,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,1,28,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,37,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,37,2,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,37,4,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,37,28,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,256,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,256,2,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,256,4,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,256,28,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,4096,1,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,4096,2,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,4096,4,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs OpenMP,openmp,4096,28,0,0,0,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,1,1,8,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,37,1,8,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,256,1,8,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,4096,1,8,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,1,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,37,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,256,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,4096,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,1,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,1,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,1,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,1,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,1,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,1,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,1,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,1,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,1,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,1,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,1,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,1,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,37,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,37,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,37,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,37,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,37,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,37,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,37,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,37,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,37,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,37,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,37,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,37,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,256,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,256,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,256,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,256,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,256,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,256,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,256,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,256,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,256,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,256,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,256,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,256,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,4096,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,4096,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,4096,1,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,4096,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,4096,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,4096,2,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,4096,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,4096,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,4096,4,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-sequential,hybrid_seq,4096,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=1),hybrid,4096,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs Hybrid-pipelined (s=3),hybrid,4096,28,16,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,1,1,32,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,37,1,32,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,256,1,32,1.14441e-05,9.8587e-07,1,0.9797,PASS
+spartan_k40_o3,Serial vs CUDA,cuda,4096,1,32,1.14441e-05,9.8587e-07,1,0.9797,PASS
