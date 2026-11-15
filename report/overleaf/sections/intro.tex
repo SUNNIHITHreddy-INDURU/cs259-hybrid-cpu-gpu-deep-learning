@@ -1,0 +1,14 @@
+Inference with deep neural networks is dominated by dense linear algebra, which maps well onto parallel hardware. A modern machine offers two kinds of parallelism: a multicore CPU, programmed here with the OpenMP shared-memory directives~\cite{dagum1998openmp}, and a GPU, programmed with CUDA~\cite{nickolls2008scalable}. A GPU runs thousands of threads, but its data must first cross the PCIe bus, and each kernel launch has a fixed cost. GPU speedups are often quoted for the kernel alone or against a weakly optimised CPU baseline, which can overstate the benefit~\cite{lee2010debunking,gregg2011data}. Heterogeneous execution tries to keep both processors busy~\cite{mittal2015survey}, but whether it pays off depends on how the work is split and overlapped.
+
+This paper measures these effects on a small but representative workload: inference of a fully connected network (784$\to$256$\to$10) on the 10{,}000 MNIST test images, processed in batches of 1 to 4096. We implement the same computation four ways---serial C++, OpenMP, CUDA, and a hybrid OpenMP--CUDA software pipeline---and compare them on identical data and weights. We ask six research questions:
+
+\begin{itemize}
+\item \textbf{RQ1} How much speedup does OpenMP give over serial execution?
+\item \textbf{RQ2} How does CUDA compare with serial and OpenMP execution, for kernel-only and end-to-end time?
+\item \textbf{RQ3} How does the batch size affect CPU and GPU performance?
+\item \textbf{RQ4} How much of the GPU execution time is data transfer rather than computation?
+\item \textbf{RQ5} Does a hybrid OpenMP--CUDA implementation improve end-to-end performance?
+\item \textbf{RQ6} How do the results relate to Amdahl's law, parallel overhead, and transfer costs?
+\end{itemize}
+
+\noindent Our contributions are: (i)~four implementations of one workload whose outputs are verified against each other and against an independent float64 computation; (ii)~a measurement protocol with warm-up, 20 repetitions and confidence intervals, following the recommendations of Hoefler and Belli~\cite{hoefler2015scientific}; (iii)~measured answers to RQ1--RQ6 on two machines; and (iv)~a reproducible code and analysis package. Every number in this paper is generated from the raw measurements by script.

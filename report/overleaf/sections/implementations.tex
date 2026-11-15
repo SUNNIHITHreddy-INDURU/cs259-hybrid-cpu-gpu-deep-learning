@@ -1,0 +1,44 @@
+All four implementations share the arithmetic of stages 0--3 (header \texttt{model.hpp}): the hidden layer accumulates over $k=0,\dots,783$ and the output layer over $j=0,\dots,255$ in the same order everywhere. They therefore perform the same mathematical work, and any difference in results comes only from fused multiply-add contraction. Figure~\ref{fig:arch} shows which processor executes which stage.
+
+\widefigure{architecture.pdf}{Execution architecture of the four implementations. Colour shows the resource: one CPU thread, OpenMP threads, GPU threads, or a PCIe transfer.}{fig:arch}
+
+\subsection{Serial CPU}
+Plain C++ loops over the batch, one thread, compiled with the same optimisation flags as the OpenMP code. Stage~1 is organised in blocks of 16 consecutive hidden units (one 64-byte cache line of a row of $W_1$) so that the inner loop is contiguous and can be vectorised by the compiler. No library routines are used.
+
+\subsection{OpenMP}
+One parallel region covers the whole pass; inside it the batch loop is executed by every thread and each stage is a work-shared loop (Listing~\ref{lst:omp}). The implicit barrier after each loop is required because the next stage reads data written by other threads. Every iteration writes a distinct output, so there are no data races: stage~0 is owned per image, stage~1 per (image, block of 16 hidden units), stage~2 per (image, class), and stage~3 per image. Splitting stage~1 over (image, block) offers 16 independent work items even for a batch of one image. The batch loop itself is not parallelised because consecutive batches reuse the same buffers.
+
+\begin{lstlisting}[language=C++,caption={OpenMP region (simplified).},label={lst:omp}]
+#pragma omp parallel num_threads(T)
+for (int s = 0; s < n; s += batch) {
+  #pragma omp for schedule(static)
+  for (b = 0; b < B; ++b) preprocess(b);
+  #pragma omp for collapse(2)
+  for (b = 0; b < B; ++b)
+    for (jb = 0; jb < 16; ++jb) hidden(b, jb);
+  #pragma omp for collapse(2)
+  for (b = 0; b < B; ++b)
+    for (c = 0; c < 10; ++c) output(b, c);
+  #pragma omp for
+  for (b = 0; b < B; ++b) argmax(b);
+}
+\end{lstlisting}
+
+\subsection{CUDA}
+Preprocessing runs on one CPU thread, the batch is copied to the GPU with a synchronous copy from pageable memory, three kernels compute the result, and the logits and classes are copied back (Figure~\ref{fig:arch}). In the hidden-layer kernel a 2-D grid of $d\times d$ thread blocks covers the output matrix: thread $(t_x,t_y)$ of block $(b_x,b_y)$ computes one element, hidden unit $j=b_xd+t_x$ of sample $b=b_yd+t_y$ (Listing~\ref{lst:cuda}). Because $j$ varies fastest, consecutive threads read consecutive addresses of $W_1$, so the loads are coalesced. The output-layer kernel uses one thread per (sample, class) and the argmax kernel one thread per sample, both with 128 threads per block. Every thread writes a distinct element, so no atomics are needed. Every CUDA call is checked for errors. The block size $d$ is 8, 16 or 32; 16 is the default.
+
+\begin{lstlisting}[language=CUDA,caption={Hidden-layer kernel.},label={lst:cuda}]
+__global__ void layer1_kernel(const float* x,
+    const float* w1, const float* b1, float* h, int B) {
+  int j = blockIdx.x*blockDim.x + threadIdx.x; // unit
+  int b = blockIdx.y*blockDim.y + threadIdx.y; // sample
+  if (b >= B || j >= 256) return;
+  float acc = b1[j];
+  for (int k = 0; k < 784; ++k)
+    acc += x[b*784 + k] * w1[k*256 + j];
+  h[b*256 + j] = acc > 0.f ? acc : 0.f;  // ReLU
+}
+\end{lstlisting}
+
+\subsection{Hybrid OpenMP--CUDA}
+The hybrid assigns each processor the stage it is best placed to do. OpenMP threads preprocess the batch into a pinned host buffer (stage~0, the only CPU stage); the DMA engines copy it to the GPU and copy the results back asynchronously; CUDA threads run the three kernels. Batches are assigned round-robin to $S$ slots (default $S=3$), each with its own CUDA stream, device buffers and pinned buffers. While the GPU works on earlier batches, the CPU already preprocesses the next one (a software pipeline~\cite{harris2012overlap}); a slot is reused only after its previous batch has finished, which is checked with a CUDA event. To separate the two ingredients we also measure a \emph{hybrid-sequential} variant: OpenMP preprocessing, but synchronous pageable copies and no overlap. Comparing CUDA-only, hybrid-sequential and hybrid-pipelined thus isolates the effect of parallel preprocessing from the effect of overlap and pinned memory.

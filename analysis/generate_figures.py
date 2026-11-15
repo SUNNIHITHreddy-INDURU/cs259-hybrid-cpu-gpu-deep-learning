@@ -298,7 +298,7 @@ def _arrow(ax, x0, y0, x1, y1):
 
 
 def fig_architecture(st):
-    fig, ax = st.figure(wide=True, aspect=0.50)
+    fig, ax = st.figure(wide=True, aspect=0.44)
     ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.grid(False)
     lanes = [
         ("Serial CPU", [("Preprocess\n(1 thread)", COLOR["serial"]), ("Hidden layer\n784→256, ReLU", COLOR["serial"]), ("Output layer\n256→10 + argmax", COLOR["serial"])]),
@@ -326,7 +326,7 @@ def fig_architecture(st):
 
 
 def fig_network(st):
-    fig, ax = st.figure(wide=True, aspect=0.30)
+    fig, ax = st.figure(wide=True, aspect=0.22)
     ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.grid(False)
     items = [("Raw image\n28×28 uint8\n(784 bytes)", "#E5E7EB", COLOR["ink"]), ("Per-image\nstandardisation\n(preprocess)", COLOR["openmp"], "white"),
              ("Input\n784 float32", COLOR["serial"], "white"), ("Hidden\n256 units\nW1: 784×256\nReLU", COLOR["cuda"], "white"),
@@ -334,12 +334,78 @@ def fig_network(st):
     n = len(items); bw = 0.13; gap = (1 - n * bw) / (n - 1)
     for i, (t, c, tc) in enumerate(items):
         x = i * (bw + gap)
-        _box(ax, x, 0.30, bw, 0.55, t, c, tc=tc, fs=plt.rcParams["font.size"])
+        _box(ax, x, 0.22, bw, 0.76, t, c, tc=tc, fs=plt.rcParams["font.size"])
         if i:
-            _arrow(ax, x - gap, 0.575, x, 0.575)
-    ax.text(0.5, 0.08, "203,530 parameters  |  203,264 multiply-accumulates (406,528 floating-point operations) per image  |  float32",
+            _arrow(ax, x - gap, 0.60, x, 0.60)
+    ax.text(0.5, 0.04, "203,530 parameters  |  203,264 multiply-accumulates (406,528 floating-point operations) per image  |  float32",
             ha="center", fontsize=plt.rcParams["font.size"] - 0.5, color=COLOR["ink"])
     st.save(fig, "network_architecture", "Workload: MNIST MLP 784 → 256 → ReLU → 10")
+
+
+
+# ---------------------------------------------------------------------------------- composites (two platforms)
+def _plat_label(S):
+    cpu = str(S.cpu_model.iloc[0]).replace("Intel(R) Xeon(R) CPU ", "Xeon ").replace("(R)", "").replace("(TM)", "")
+    cpu = cpu.split(" @")[0]
+    return f"{cpu}, up to {int(S[S.impl == 'openmp'].threads.max())} threads"
+
+
+def fig_omp_combined(st, summaries, plats):
+    plats = [p for p in plats if p in summaries and has(summaries[p], "openmp")]
+    if not plats:
+        return
+    cmap = plt.get_cmap("Blues")
+    fig, axes = st.figure(wide=True, aspect=0.50 if len(plats) > 1 else 0.40, nrows=2, ncols=len(plats), squeeze=False)
+    for j, plat in enumerate(plats):
+        S = summaries[plat]
+        batches = [b for b in (1, 64, 256, 4096) if b in set(S[S.impl == "openmp"].batch)]
+        threads = sorted(S[S.impl == "openmp"].threads.unique())
+        for i, b in enumerate(batches):
+            c = cmap(0.35 + 0.65 * i / max(1, len(batches) - 1))
+            d = S[(S.impl == "openmp") & (S.batch == b)].sort_values("threads")
+            axes[0][j].plot(d.threads, d.speedup_vs_serial, color=c, marker="osD^"[i % 4], label=f"batch {b}")
+            axes[1][j].plot(d.threads, d.efficiency, color=c, marker="osD^"[i % 4], label=f"batch {b}")
+        axes[0][j].plot(threads, threads, color=COLOR["serial"], linestyle="--", linewidth=0.9, label="ideal")
+        axes[0][j].axhline(1, color=COLOR["other"], linewidth=0.6)
+        axes[1][j].axhline(1, color=COLOR["serial"], linestyle="--", linewidth=0.9)
+        for r in (0, 1):
+            log2_axis(axes[r][j], threads)
+            if "M4" in str(S.cpu_model.iloc[0]):
+                axes[r][j].axvline(4, color=COLOR["other"], linestyle=":", linewidth=0.9)
+        axes[0][j].set_title(_plat_label(S), fontsize=plt.rcParams["font.size"] - 0.5)
+        axes[1][j].set_xlabel("OpenMP threads")
+        axes[0][j].set_ylabel("Speedup over serial (x)")
+        axes[1][j].set_ylabel("Efficiency")
+    axes[0][0].legend(loc="upper left", fontsize=plt.rcParams["font.size"] - 1.5)
+    st.save(fig, "omp_combined", "OpenMP speedup and efficiency")
+
+
+def fig_amdahl_combined(st, summaries, plats):
+    from statistical_analysis import amdahl
+    plats = [p for p in plats if p in summaries and has(summaries[p], "openmp") and (ar.PROC / f"amdahl_{p}.csv").exists()]
+    if not plats:
+        return
+    cmap = plt.get_cmap("Blues")
+    fig, axes = st.figure(wide=True, aspect=0.36, ncols=len(plats), squeeze=False)
+    for j, plat in enumerate(plats):
+        S, ax = summaries[plat], axes[0][j]
+        fits = pd.read_csv(ar.PROC / f"amdahl_{plat}.csv")
+        threads = np.array(sorted(S[S.impl == "openmp"].threads.unique()), float)
+        grid = np.linspace(threads.min(), threads.max(), 100)
+        batches = [b for b in (8, 64, 256, 4096) if b in set(fits.batch)]
+        for i, b in enumerate(batches):
+            c = cmap(0.35 + 0.65 * i / max(1, len(batches) - 1))
+            d = S[(S.impl == "openmp") & (S.batch == b)].sort_values("threads")
+            f = float(fits[fits.batch == b].serial_fraction.iloc[0])
+            ax.plot(d.threads, d.speedup_vs_serial, color=c, marker="o", linestyle="none")
+            ax.plot(grid, amdahl(grid, f), color=c, linewidth=0.9, label=f"batch {b}: f = {f:.3f}")
+        ax.plot(threads, threads, color=COLOR["serial"], linestyle="--", linewidth=0.9, label="ideal")
+        log2_axis(ax, threads)
+        ax.set_title(_plat_label(S), fontsize=plt.rcParams["font.size"] - 0.5)
+        ax.set_xlabel("OpenMP threads")
+        ax.set_ylabel("Speedup over serial (x)")
+        ax.legend(loc="upper left", fontsize=plt.rcParams["font.size"] - 1.5)
+    st.save(fig, "amdahl_combined", "Measured speedup and fitted Amdahl curves")
 
 
 # ---------------------------------------------------------------------------------- main
@@ -351,6 +417,9 @@ def main():
         fig_architecture(st)
         fig_network(st)
         fig_correctness(st)
+        main_plats = [p for p in ('mac_m4', 'spartan_k40_native') if p in summaries]
+        fig_omp_combined(st, summaries, main_plats)
+        fig_amdahl_combined(st, summaries, main_plats)
         for plat, S in summaries.items():
             fig_exec_time(st, S, plat)
             fig_throughput(st, S, plat)

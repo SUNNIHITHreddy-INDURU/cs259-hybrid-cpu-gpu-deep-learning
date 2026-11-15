@@ -4,6 +4,7 @@
 set -u
 PLATFORM="${1:-local}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+mkdir -p "$ROOT/environment"
 OUT="$ROOT/environment/environment_report_${PLATFORM}.md"
 [ -e "$OUT" ] && OUT="$ROOT/environment/environment_report_${PLATFORM}_$(date +%Y%m%d_%H%M%S).md"
 have() { command -v "$1" >/dev/null 2>&1; }
