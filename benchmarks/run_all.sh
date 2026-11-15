@@ -29,7 +29,9 @@ echo "== correctness gate =="
 "$BIN/nn_validate" --platform "$PLATFORM" --out "$RAW/${PLATFORM}_${TS}_validation.csv" | tee "$RAW/${PLATFORM}_${TS}_validation.log"
 
 echo "== benchmarks =="
+echo "system load before benchmarks: $(uptime)"
 "$BIN/nn_bench" --platform "$PLATFORM" --impls "$IMPLS" --batches "$BATCHES" --blocks "$BLOCKS" \
   --runs "$RUNS" --warmup "$WARMUP" "${THREAD_ARG[@]}" --micro --out "$RAW/${PLATFORM}_${TS}_bench.csv" \
   | tee "$RAW/${PLATFORM}_${TS}_bench.log"
+echo "system load after benchmarks: $(uptime)" | tee -a "$RAW/${PLATFORM}_${TS}_bench.log"
 echo "done: $RAW/${PLATFORM}_${TS}_*"

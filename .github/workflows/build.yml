@@ -1,0 +1,13 @@
+name: build
+on: [push, pull_request]
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build CPU targets
+        run: make cpu
+      - name: Download MNIST and run the correctness gate
+        run: |
+          python3 data/download_mnist.py
+          make test

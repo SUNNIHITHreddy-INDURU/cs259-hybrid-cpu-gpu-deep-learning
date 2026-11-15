@@ -1,0 +1,21 @@
+platform,comparison,impl,batch,threads,block,max_abs_err,mean_abs_err,pred_agreement,accuracy,pass
+mac_m4,Serial float32 vs NumPy float64,serial,256,1,0,9.15527e-05,1.74197e-05,1,1,PASS
+mac_m4,Serial batch-invariance,serial,1,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial batch-invariance,serial,37,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial batch-invariance,serial,4096,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,1,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,1,2,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,1,4,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,1,10,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,37,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,37,2,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,37,4,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,37,10,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,256,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,256,2,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,256,4,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,256,10,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,4096,1,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,4096,2,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,4096,4,0,0,0,1,0.9797,PASS
+mac_m4,Serial vs OpenMP,openmp,4096,10,0,0,0,1,0.9797,PASS
