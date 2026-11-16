@@ -508,15 +508,17 @@
 \renewcommand\lstlistingname{Listing}
 
 %% -------------------------------------------------- references list
-%% Numbered [1], [2], ... (BibTeX style cs259.bst sorts by first author),
+%% Numbered [1], [2], ... (BibTeX style cs259.bst sorts by first author; the paper uses cs259ieee.bst, see main.tex),
 %% 9 pt, ragged right, hanging indent; the heading is a numbered section.
 \newcommand\cs@raggedright{%
   \rightskip=0pt \@plus 3em \relax \leftskip=\z@skip
   \spaceskip=.333em \@plus .15em \@minus .08em \relax
   \xspaceskip=.5em \relax
   \parfillskip=\z@ \@plus 1fil}
+\newcommand\csReferencesIntro{}% text under the References heading; redefine in main.tex
 \renewenvironment{thebibliography}[1]{%
   \section{References}%
+  \csReferencesIntro
   \list{\@biblabel{\@arabic\c@enumiv}}%
     {\settowidth\labelwidth{\@biblabel{99}}%
      \setlength\leftmargin{18bp}%

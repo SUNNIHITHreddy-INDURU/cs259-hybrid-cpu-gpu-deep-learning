@@ -1,87 +1,99 @@
-% Verified 2026-11-15; provenance of every field is in docs/reference_verification.md
-% Style note: the cs259.bst style prints the `url' field at the end of each entry
-% and ignores `doi', `articleno', `numpages', `eprint', so every entry carries a
-% resolvable `url' (the DOI resolver link when a DOI exists).
+% References in IEEE style (BibTeX style cs259ieee.bst, a renamed copy of IEEEtran.bst 1.14 with `doi' and `urldate' fields added).
+% Fields were checked against the Crossref record of each DOI, the arXiv record, and the web page itself;
+% provenance of every field is in docs/reference_verification.md, re-check of 2026-11-16 in docs/reference_check_2026-11-16.md.
+%
+% Order: this style does not sort. The course template asks for a numbered list ordered alphabetically by first author,
+% so main.tex cites every key once, in alphabetical order, with \nocite before the first \cite. When a reference is added,
+% insert its key at the right place in that \nocite list.
+%
+% Titles are written in sentence case and journal / proceedings names are abbreviated, as IEEE style requires.
+% The `note' of the two entries with an article number carries the DOI as well (the style would otherwise put a period between them).
+% For documents with a DOI only the DOI is printed (no extra URL); web documents carry `url' and the access date in `urldate'.
+
+@IEEEtranBSTCTL{IEEEexample:BSTcontrol,
+  CTLuse_forced_etal       = "yes",
+  CTLmax_names_forced_etal = "6",
+  CTLnames_show_etal       = "1",
+  CTLuse_article_number    = "yes",
+  CTLuse_url               = "yes",
+  CTLuse_alt_spacing       = "no",
+  CTLdash_repeated_names   = "no"
+}
+% CTLuse_forced_etal / CTLmax_names_forced_etal / CTLnames_show_etal: more than 6 authors -> first author followed by "et al."
 
 % ---------------------------------------------------------------------------
 % Parallel-performance laws and metrics
 % ---------------------------------------------------------------------------
 
 @inproceedings{amdahl1967validity,
-  author    = {Amdahl, Gene M.},
-  title     = {Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities},
-  booktitle = {Proceedings of the April 18--20, 1967, Spring Joint Computer Conference},
-  series    = {AFIPS Conference Proceedings},
+  author    = {Gene M. Amdahl},
+  title     = {Validity of the single processor approach to achieving large scale computing capabilities},
+  booktitle = {Proc. AFIPS Spring Joint Comput. Conf.},
+  address   = {Atlantic City, NJ, USA},
   volume    = {30},
   pages     = {483--485},
+  month     = apr,
   year      = {1967},
-  publisher = {ACM},
-  doi       = {10.1145/1465482.1465560},
-  url       = {https://doi.org/10.1145/1465482.1465560}
+  doi       = {10.1145/1465482.1465560}
 }
 
 @article{gustafson1988reevaluating,
-  author  = {Gustafson, John L.},
-  title   = {Reevaluating {Amdahl}'s Law},
-  journal = {Communications of the ACM},
+  author  = {John L. Gustafson},
+  title   = {Reevaluating {Amdahl's} law},
+  journal = {Commun. ACM},
   volume  = {31},
   number  = {5},
   pages   = {532--533},
   month   = may,
   year    = {1988},
-  doi     = {10.1145/42411.42415},
-  url     = {https://doi.org/10.1145/42411.42415}
+  doi     = {10.1145/42411.42415}
 }
 
 @article{karp1990measuring,
-  author  = {Karp, Alan H. and Flatt, Horace P.},
-  title   = {Measuring Parallel Processor Performance},
-  journal = {Communications of the ACM},
+  author  = {Alan H. Karp and Horace P. Flatt},
+  title   = {Measuring parallel processor performance},
+  journal = {Commun. ACM},
   volume  = {33},
   number  = {5},
   pages   = {539--543},
   month   = may,
   year    = {1990},
-  doi     = {10.1145/78607.78614},
-  url     = {https://doi.org/10.1145/78607.78614}
+  doi     = {10.1145/78607.78614}
 }
 
 @article{hill2008amdahl,
-  author  = {Hill, Mark D. and Marty, Michael R.},
-  title   = {{Amdahl}'s Law in the Multicore Era},
+  author  = {Mark D. Hill and Michael R. Marty},
+  title   = {{Amdahl's} law in the multicore era},
   journal = {Computer},
   volume  = {41},
   number  = {7},
   pages   = {33--38},
   month   = jul,
   year    = {2008},
-  doi     = {10.1109/MC.2008.209},
-  url     = {https://doi.org/10.1109/MC.2008.209}
+  doi     = {10.1109/MC.2008.209}
 }
 
 @article{williams2009roofline,
-  author  = {Williams, Samuel and Waterman, Andrew and Patterson, David},
-  title   = {Roofline: An Insightful Visual Performance Model for Multicore Architectures},
-  journal = {Communications of the ACM},
+  author  = {Samuel Williams and Andrew Waterman and David Patterson},
+  title   = {Roofline: An insightful visual performance model for multicore architectures},
+  journal = {Commun. ACM},
   volume  = {52},
   number  = {4},
   pages   = {65--76},
   month   = apr,
   year    = {2009},
-  doi     = {10.1145/1498765.1498785},
-  url     = {https://doi.org/10.1145/1498765.1498785}
+  doi     = {10.1145/1498765.1498785}
 }
 
 @inproceedings{hoefler2015scientific,
-  author    = {Hoefler, Torsten and Belli, Roberto},
-  title     = {Scientific Benchmarking of Parallel Computing Systems: Twelve Ways to Tell the Masses When Reporting Performance Results},
-  booktitle = {Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis ({SC} '15)},
-  pages     = {73:1--73:12},
+  author    = {Torsten Hoefler and Roberto Belli},
+  title     = {Scientific benchmarking of parallel computing systems: Twelve ways to tell the masses when reporting performance results},
+  booktitle = {Proc. Int. Conf. High Perform. Comput., Netw., Storage Anal. (SC '15)},
+  address   = {Austin, TX, USA},
+  pages     = {1--12},
   month     = nov,
   year      = {2015},
-  publisher = {ACM},
-  doi       = {10.1145/2807591.2807644},
-  url       = {https://doi.org/10.1145/2807591.2807644}
+  note      = {{A}rt. no. 73, doi: \href{https://doi.org/10.1145/2807591.2807644}{\nolinkurl{10.1145/2807591.2807644}}}
 }
 
 % ---------------------------------------------------------------------------
@@ -89,91 +101,89 @@
 % ---------------------------------------------------------------------------
 
 @article{dagum1998openmp,
-  author  = {Dagum, Leonardo and Menon, Ramesh},
-  title   = {{OpenMP}: An Industry Standard {API} for Shared-Memory Programming},
-  journal = {{IEEE} Computational Science and Engineering},
+  author  = {Leonardo Dagum and Ramesh Menon},
+  title   = {{OpenMP}: An industry standard {API} for shared-memory programming},
+  journal = {IEEE Comput. Sci. Eng.},
   volume  = {5},
   number  = {1},
   pages   = {46--55},
   year    = {1998},
-  doi     = {10.1109/99.660313},
-  url     = {https://doi.org/10.1109/99.660313}
+  doi     = {10.1109/99.660313}
 }
 
 @misc{openmparb2021specification,
   author       = {{OpenMP Architecture Review Board}},
-  title        = {{{OpenMP} Application Programming Interface, Version 5.2}},
-  howpublished = {Specification (PDF)},
+  title        = {{OpenMP} application programming interface},
+  howpublished = {Version 5.2},
   month        = nov,
   year         = {2021},
-  url          = {https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5-2.pdf},
-  note         = {Accessed: 2026-11-15}
+  urldate      = {Nov. 16, 2026},
+  url          = {https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-5-2.pdf}
 }
 
 @article{nickolls2008scalable,
-  author  = {Nickolls, John and Buck, Ian and Garland, Michael and Skadron, Kevin},
-  title   = {Scalable Parallel Programming with {CUDA}: Is {CUDA} the Parallel Programming Model That Application Developers Have Been Waiting For?},
-  journal = {{ACM} Queue},
+  author  = {John Nickolls and Ian Buck and Michael Garland and Kevin Skadron},
+  title   = {Scalable parallel programming with {CUDA}: Is {CUDA} the parallel programming model that application developers have been waiting for?},
+  journal = {ACM Queue},
   volume  = {6},
   number  = {2},
   pages   = {40--53},
   year    = {2008},
-  doi     = {10.1145/1365490.1365500},
-  url     = {https://doi.org/10.1145/1365490.1365500}
+  doi     = {10.1145/1365490.1365500}
 }
 
 @misc{nvidia2026cudaguide,
   author       = {{NVIDIA Corporation}},
-  title        = {{{CUDA} Programming Guide}},
-  howpublished = {Online documentation, version 13.5},
+  title        = {{CUDA} programming guide},
+  howpublished = {Version 13.5},
   month        = oct,
   year         = {2026},
-  url          = {https://docs.nvidia.com/cuda/cuda-programming-guide/index.html},
-  note         = {Page states ``Last updated on Oct 31, 2026''. Accessed: 2026-11-15}
+  urldate      = {Nov. 16, 2026},
+  url          = {https://docs.nvidia.com/cuda/cuda-programming-guide/index.html}
 }
 
 @misc{harris2012transfers,
-  author       = {Harris, Mark},
-  title        = {How to Optimize Data Transfers in {CUDA} {C/C++}},
+  author       = {Mark Harris},
+  title        = {How to optimize data transfers in {CUDA} {C/C++}},
   howpublished = {{NVIDIA} Technical Blog},
   month        = dec,
   year         = {2012},
-  url          = {https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/},
-  note         = {Accessed: 2026-11-15}
+  urldate      = {Nov. 16, 2026},
+  url          = {https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/}
 }
 
 @misc{harris2012overlap,
-  author       = {Harris, Mark},
-  title        = {How to Overlap Data Transfers in {CUDA} {C/C++}},
+  author       = {Mark Harris},
+  title        = {How to overlap data transfers in {CUDA} {C/C++}},
   howpublished = {{NVIDIA} Technical Blog},
   month        = dec,
   year         = {2012},
-  url          = {https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/},
-  note         = {Accessed: 2026-11-15}
+  urldate      = {Nov. 16, 2026},
+  url          = {https://developer.nvidia.com/blog/how-overlap-data-transfers-cuda-cc/}
 }
 
 @misc{harris2012metrics,
-  author       = {Harris, Mark},
-  title        = {How to Implement Performance Metrics in {CUDA} {C/C++}},
+  author       = {Mark Harris},
+  title        = {How to implement performance metrics in {CUDA} {C/C++}},
   howpublished = {{NVIDIA} Technical Blog},
   month        = nov,
   year         = {2012},
-  url          = {https://developer.nvidia.com/blog/how-implement-performance-metrics-cuda-cc/},
-  note         = {Accessed: 2026-11-15}
+  urldate      = {Nov. 16, 2026},
+  url          = {https://developer.nvidia.com/blog/how-implement-performance-metrics-cuda-cc/}
 }
 
-@inproceedings{yoo2003slurm,
-  author    = {Yoo, Andy B. and Jette, Morris A. and Grondona, Mark},
-  title     = {{SLURM}: Simple {Linux} Utility for Resource Management},
+@incollection{yoo2003slurm,
+  author    = {Andy B. Yoo and Morris A. Jette and Mark Grondona},
+  title     = {{SLURM}: Simple {Linux} utility for resource management},
   booktitle = {Job Scheduling Strategies for Parallel Processing},
-  editor    = {Feitelson, Dror and Rudolph, Larry and Schwiegelshohn, Uwe},
   series    = {Lecture Notes in Computer Science},
   volume    = {2862},
+  editor    = {Dror Feitelson and Larry Rudolph and Uwe Schwiegelshohn},
+  publisher = {Springer},
+  address   = {Berlin, Germany},
   pages     = {44--60},
   year      = {2003},
-  publisher = {Springer Berlin Heidelberg},
-  doi       = {10.1007/10968987_3},
-  url       = {https://doi.org/10.1007/10968987_3}
+  doi       = {10.1007/10968987_3}
 }
 
 % ---------------------------------------------------------------------------
@@ -181,106 +191,106 @@
 % ---------------------------------------------------------------------------
 
 @inproceedings{lee2010debunking,
-  author    = {Lee, Victor W. and Kim, Changkyu and Chhugani, Jatin and Deisher, Michael and Kim, Daehyun and Nguyen, Anthony D. and Satish, Nadathur and Smelyanskiy, Mikhail and Chennupaty, Srinivas and Hammarlund, Per and Singhal, Ronak and Dubey, Pradeep},
-  title     = {Debunking the {100X} {GPU} vs. {CPU} Myth: An Evaluation of Throughput Computing on {CPU} and {GPU}},
-  booktitle = {Proceedings of the 37th Annual International Symposium on Computer Architecture ({ISCA} '10)},
+  author    = {Victor W. Lee and Changkyu Kim and Jatin Chhugani and Michael Deisher and Daehyun Kim and Anthony D. Nguyen and Nadathur Satish and Mikhail Smelyanskiy and Srinivas Chennupaty and Per Hammarlund and Ronak Singhal and Pradeep Dubey},
+  title     = {Debunking the {100X} {GPU} vs. {CPU} myth: An evaluation of throughput computing on {CPU} and {GPU}},
+  booktitle = {Proc. 37th Annu. Int. Symp. Comput. Archit. (ISCA '10)},
+  address   = {Saint-Malo, France},
   pages     = {451--460},
   month     = jun,
   year      = {2010},
-  publisher = {ACM},
-  doi       = {10.1145/1815961.1816021},
-  url       = {https://doi.org/10.1145/1815961.1816021}
+  doi       = {10.1145/1815961.1816021}
 }
 
 @inproceedings{gregg2011data,
-  author    = {Gregg, Chris and Hazelwood, Kim},
-  title     = {Where is the Data? {Why} You Cannot Debate {CPU} vs. {GPU} Performance Without the Answer},
-  booktitle = {{IEEE} International Symposium on Performance Analysis of Systems and Software ({ISPASS})},
+  author    = {Chris Gregg and Kim Hazelwood},
+  title     = {Where is the data? {Why} you cannot debate {CPU} vs. {GPU} performance without the answer},
+  booktitle = {Proc. IEEE Int. Symp. Perform. Anal. Syst. Softw. (ISPASS)},
+  address   = {Austin, TX, USA},
   pages     = {134--144},
   month     = apr,
   year      = {2011},
-  publisher = {IEEE},
-  doi       = {10.1109/ISPASS.2011.5762730},
-  url       = {https://doi.org/10.1109/ISPASS.2011.5762730}
+  doi       = {10.1109/ISPASS.2011.5762730}
 }
 
 @article{mittal2015survey,
-  author    = {Mittal, Sparsh and Vetter, Jeffrey S.},
-  title     = {A Survey of {CPU}-{GPU} Heterogeneous Computing Techniques},
-  journal   = {{ACM} Computing Surveys},
-  volume    = {47},
-  number    = {4},
-  pages     = {69:1--69:35},
-  articleno = {69},
-  numpages  = {35},
-  month     = jul,
-  year      = {2015},
-  doi       = {10.1145/2788396},
-  url       = {https://doi.org/10.1145/2788396}
+  author  = {Sparsh Mittal and Jeffrey S. Vetter},
+  title   = {A survey of {CPU}--{GPU} heterogeneous computing techniques},
+  journal = {ACM Comput. Surv.},
+  volume  = {47},
+  number  = {4},
+  pages   = {1--35},
+  month   = jul,
+  year    = {2015},
+  note    = {{A}rt. no. 69, doi: \href{https://doi.org/10.1145/2788396}{\nolinkurl{10.1145/2788396}}}
 }
 
 @inproceedings{jouppi2017tpu,
-  author    = {Jouppi, Norman P. and Young, Cliff and Patil, Nishant and others},
-  title     = {In-Datacenter Performance Analysis of a {Tensor Processing Unit}},
-  booktitle = {Proceedings of the 44th Annual International Symposium on Computer Architecture ({ISCA} '17)},
+  author    = {Norman P. Jouppi and others},
+  title     = {In-datacenter performance analysis of a {Tensor Processing Unit}},
+  booktitle = {Proc. 44th Annu. Int. Symp. Comput. Archit. (ISCA '17)},
+  address   = {Toronto, ON, Canada},
   pages     = {1--12},
   month     = jun,
   year      = {2017},
-  publisher = {ACM},
-  doi       = {10.1145/3079856.3080246},
-  url       = {https://doi.org/10.1145/3079856.3080246}
+  doi       = {10.1145/3079856.3080246}
 }
 
 @article{sze2017efficient,
-  author  = {Sze, Vivienne and Chen, Yu-Hsin and Yang, Tien-Ju and Emer, Joel S.},
-  title   = {Efficient Processing of Deep Neural Networks: A Tutorial and Survey},
-  journal = {Proceedings of the {IEEE}},
+  author  = {Vivienne Sze and Yu-Hsin Chen and Tien-Ju Yang and Joel S. Emer},
+  title   = {Efficient processing of deep neural networks: A tutorial and survey},
+  journal = {Proc. IEEE},
   volume  = {105},
   number  = {12},
   pages   = {2295--2329},
   month   = dec,
   year    = {2017},
-  doi     = {10.1109/JPROC.2017.2761740},
-  url     = {https://doi.org/10.1109/JPROC.2017.2761740}
+  doi     = {10.1109/JPROC.2017.2761740}
 }
 
 % ---------------------------------------------------------------------------
-% Workload: dataset, optimiser, initialisation
+% Workload: dataset, optimizer, initialization
 % ---------------------------------------------------------------------------
 
 @article{lecun1998gradient,
-  author  = {LeCun, Yann and Bottou, L{\'e}on and Bengio, Yoshua and Haffner, Patrick},
-  title   = {Gradient-Based Learning Applied to Document Recognition},
-  journal = {Proceedings of the {IEEE}},
+  author  = {Yann LeCun and L{\'e}on Bottou and Yoshua Bengio and Patrick Haffner},
+  title   = {Gradient-based learning applied to document recognition},
+  journal = {Proc. IEEE},
   volume  = {86},
   number  = {11},
   pages   = {2278--2324},
   month   = nov,
   year    = {1998},
-  doi     = {10.1109/5.726791},
-  url     = {https://doi.org/10.1109/5.726791}
+  doi     = {10.1109/5.726791}
 }
 
 @inproceedings{kingma2015adam,
-  author        = {Kingma, Diederik P. and Ba, Jimmy Lei},
-  title         = {{Adam}: A Method for Stochastic Optimization},
-  booktitle     = {3rd International Conference on Learning Representations ({ICLR} 2015)},
-  year          = {2015},
-  eprint        = {1412.6980},
-  archiveprefix = {arXiv},
-  primaryclass  = {cs.LG},
-  doi           = {10.48550/arXiv.1412.6980},
-  url           = {https://arxiv.org/abs/1412.6980}
+  author    = {Diederik P. Kingma and Jimmy Lei Ba},
+  title     = {Adam: A method for stochastic optimization},
+  booktitle = {Proc. 3rd Int. Conf. Learn. Represent. (ICLR)},
+  address   = {San Diego, CA, USA},
+  year      = {2015},
+  note      = {arXiv:1412.6980}
 }
 
 @inproceedings{he2015delving,
-  author    = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
-  title     = {Delving Deep into Rectifiers: Surpassing Human-Level Performance on {ImageNet} Classification},
-  booktitle = {2015 {IEEE} International Conference on Computer Vision ({ICCV})},
+  author    = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},
+  title     = {Delving deep into rectifiers: Surpassing human-level performance on {ImageNet} classification},
+  booktitle = {Proc. IEEE Int. Conf. Comput. Vis. (ICCV)},
+  address   = {Santiago, Chile},
   pages     = {1026--1034},
   month     = dec,
   year      = {2015},
-  publisher = {IEEE},
-  doi       = {10.1109/ICCV.2015.123},
-  url       = {https://doi.org/10.1109/ICCV.2015.123}
+  doi       = {10.1109/ICCV.2015.123}
+}
+
+% ---------------------------------------------------------------------------
+% The author's own work for this paper
+% ---------------------------------------------------------------------------
+
+@misc{induru2026repository,
+  author       = {Sunnihith Reddy Induru},
+  title        = {cs259-hybrid-cpu-gpu-deep-learning: Serial, {OpenMP}, {CUDA} and hybrid {OpenMP}--{CUDA} {MNIST} inference with raw measurements, analysis scripts, figures and paper source},
+  howpublished = {{GitHub} repository},
+  year         = {2026},
+  url          = {https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning}
 }

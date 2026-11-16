@@ -10,7 +10,8 @@ Learning Using OpenMP and CUDA*.
 |---|---|
 | `main.tex` | the paper skeleton (11 sections, `% TODO` placeholders); edit this |
 | `cs259.cls` | the template: page geometry, fonts, headings, captions, references, helpers |
-| `cs259.bst` | BibTeX style: numbered `[1]`, sorted alphabetically by first author, `url` field printed |
+| `cs259ieee.bst` | BibTeX style of the paper: IEEE reference format, numbered `[1]`; copy of `IEEEtran.bst` 1.14 (LPPL) renamed, with `doi` and `urldate` fields added. It does not sort, so `main.tex` cites all keys once, alphabetically, with `\nocite` before the first `\cite` |
+| `cs259.bst` | BibTeX style of the 3-page layout demo only: numbered `[1]`, sorted alphabetically by first author (Communications of the ACM flavour) |
 | `refs.bib` | bibliography database (maintained separately) |
 | `figures/` | put the paper's figures here (`\graphicspath` already points to it) |
 | `latexmkrc` | makes Overleaf/latexmk use pdfLaTeX + BibTeX and `main.tex` |
@@ -134,4 +135,8 @@ OpenMP     & 1.62 & 5.9$\times$ & 0.37 \\
 * Put `{...}` around capitalized words in titles you want kept (`{ImageNet}`, `{CUDA}`), otherwise BibTeX
   lowercases them.
 * Hyphenated first names: write `Hwu, Wen-mei W.` (Last, First) or `{Wen-mei} W. Hwu`.
-* A `url` field is printed at the end of the entry; `doi`, `eprint` etc. are ignored by `cs259.bst`.
+* The paper uses `cs259ieee.bst` (IEEE format): write author names as `First Last`, titles in sentence case, journal and proceedings names abbreviated
+  (`Commun. ACM`, `Proc. IEEE`), `doi = {10.xxxx/yyyy}` for papers and `url` + `urldate = {Nov. 16, 2026}` for web documents.
+* Order: the style does not sort. Add the new key to the `\nocite{...}` list in `main.tex` at its alphabetical position (first author),
+  otherwise it is numbered by its first `\cite`.
+* `python3 scripts/verify_references.py` re-checks every entry against Crossref / arXiv / the web page and against the rendered PDF.

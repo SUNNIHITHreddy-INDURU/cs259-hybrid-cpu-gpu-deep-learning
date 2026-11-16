@@ -16,7 +16,8 @@ the code in `src/`, and the project scripts. The numbers are checked by `scripts
 | Justified body text | met | `cs259.cls`; wide tables use left-aligned cells to avoid gaps |
 | Table captions above tables, figure captions below figures | met | all 14 tables and 14 figures inspected |
 | Tables and figures close to their first discussion | met | each float follows or sits on the page of its first reference |
-| References numbered `[1]`, alphabetical by first author | met | 22 entries, `cs259.bst`; list inspected in the PDF |
+| References numbered `[1]`, alphabetical by first author | met | 23 entries (22 published works + the author's repository), `cs259ieee.bst`; order checked by `scripts/verify_references.py`; list inspected in the PDF |
+| Reference entry format | IEEE style, as the student asked on 2026-11-16 | initials before surnames, quoted sentence-case titles, abbreviated journal and proceedings names, `doi:`, `Accessed:` and `[Online]. Available:` for web documents. The template's own sample list is in Communications of the ACM format; the template's rule (numbered, ordered alphabetically by first author, cited as `[1]`) is kept, which differs from plain IEEE (numbered by first citation) |
 | Columns on the last page of equal length | met | page 14: both columns end at the same height |
 | No clipped figures, overlapping text or broken glyphs | met | all 14 pages inspected at 100 dpi; fonts embedded; "ff" ligature appears only in `pdftotext` output, not on the page |
 | Clean build | met | `build.sh` (tectonic): no overfull box wider than 5 pt; the Overleaf zip compiles from a clean directory to an identical PDF |
@@ -95,18 +96,32 @@ with a compute-only time. They now divide the serial time of stages 1-3 by the k
 | Hybrid first faster than best OpenMP | batch 32; the CUDA pipeline is level with the best OpenMP at batch 128 (58.62 ms vs 58.25 ms) and ahead from batch 256 |
 
 Abstract, results, discussion and conclusion take their measured values from `numbers.tex`, which is generated from the raw data;
-a few counts typed by hand (seven thread counts, 22 references, 20 recorded passes) were checked against the code and the CSV files.
+a few counts typed by hand (seven thread counts, 20 recorded passes) were checked against the code and the CSV files.
 Comparison labels: "compute-only" (stages 1-3, GPU kernels) and "end-to-end" (stages 0-3 with copies) are named wherever a ratio is given.
 
 ## 7. References
 
-22 entries, each cited in the text, ordered alphabetically by first author, numbered in the list. Re-verified on 2026-11-16: the 16
-entries with a Crossref DOI match on title (Crossref stores some titles without the subtitle), first author, venue and pages; the
-arXiv entry (Kingma and Ba) matches DataCite; the five web documents (three NVIDIA blog posts, the CUDA guide, the OpenMP 5.2
-specification) return HTTP 200. Topics: Amdahl,
-Gustafson, Karp-Flatt, Hill-Marty, roofline, benchmarking practice, OpenMP, CUDA, transfers, streams and overlap, pinned memory,
-Slurm, CPU-GPU comparison and collaboration, deep-learning performance, MNIST, initialization and optimizer. Provenance of each
-field: `docs/reference_verification.md`.
+23 entries, each cited in the text (the repository, reference [11], in the Availability paragraph and in Section 11), numbered in
+alphabetical order of the first author. Re-checked on 2026-11-16 with `scripts/verify_references.py` (report:
+`docs/reference_check.md`): for the 16 entries with a Crossref record, the DOI is registered in the DOI system and every author's
+family name (count and order), the title (with subtitle), year, month, volume, issue, pages and the conference city match Crossref
+or the second source named in the report (Amdahl: Semantic Scholar and the Crossref record of the IEEE reprint; LeCun: the heading
+of the author's PDF, read by eye; SLURM: the Crossref record of the book and OpenAlex); the arXiv entry (Kingma and Ba) matches the
+arXiv record; the three NVIDIA blog posts show the cited title, author and month, the CUDA guide shows "Last updated on Oct 31, 2026"
+and the OpenMP specification's title page reads "Version 5.2 November 2021". Every entry's first author, title, year, pages and DOI or
+URL were also found in the rendered reference list. One reworded claim: the sentence on Hill and Marty now states what their abstract
+says (optimal multicore performance needs more parallelism and faster sequential cores). Topics: Amdahl, Gustafson, Karp-Flatt,
+Hill-Marty, roofline, benchmarking practice, OpenMP, CUDA, transfers, streams and overlap, pinned memory, Slurm, CPU-GPU comparison
+and collaboration, deep-learning performance, MNIST, initialization and optimizer. Provenance of each field:
+`docs/reference_verification.md`.
+
+The only failed check is the repository entry: the URL answers HTTP 404 without credentials because the repository is private and
+empty (see section 9).
+
+Section 11 also carries an "Original material" paragraph: all figures and tables were created by the author for the paper from the
+project's own measurements, source code and calculations, none copied or adapted from another publication; the data figures are
+generated by scripts from the raw measurements, the three diagrams were drawn by the author; the code, raw measurements and report
+source are the author's own work and are reference [11].
 
 ## 8. Asymmetries stated in the paper
 
@@ -118,6 +133,7 @@ timing variation is reported (median coefficient of variation 0.2 %).
 
 ## 9. Open item
 
-The repository URL in the Availability paragraph is `https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning`.
-On 2026-11-16 the repository is **private** and **nothing has been pushed to it yet**, so the link does not work for a reader until
-the owner pushes and either makes the repository public or gives the instructor access.
+The repository URL in the Availability paragraph and in reference [11] is
+`https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning`. On 2026-11-16 the repository exists but is **private and
+empty** (nothing has been pushed), so the link does not work for a reader until the owner pushes and either makes the repository public or
+gives the instructor access. The course template says references must be published materials accessible to the public.

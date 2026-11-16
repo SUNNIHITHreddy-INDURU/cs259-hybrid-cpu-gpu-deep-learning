@@ -16,7 +16,7 @@ python3 scripts/check_units.py
 STAGE="$(mktemp -d)"; trap 'rm -rf "$STAGE"' EXIT
 O=report/overleaf
 mkdir -p "$STAGE/code"
-cp -R $O/main.tex $O/cs259.cls $O/cs259.bst $O/refs.bib $O/latexmkrc $O/numbers.tex $O/sections $O/tables $O/figures "$STAGE/"
+cp -R $O/main.tex $O/cs259.cls $O/cs259.bst $O/cs259ieee.bst $O/refs.bib $O/latexmkrc $O/numbers.tex $O/sections $O/tables $O/figures "$STAGE/"
 cp $O/README_OVERLEAF.md "$STAGE/README_OVERLEAF.md"
 # code, raw measurements and analysis (no build products, no downloaded MNIST files)
 cp README.md LICENSE Makefile CMakeLists.txt "$STAGE/code/"

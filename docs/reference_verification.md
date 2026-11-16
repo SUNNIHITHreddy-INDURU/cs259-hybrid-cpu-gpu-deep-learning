@@ -3,6 +3,8 @@
 Project: "Performance Evaluation of Hybrid CPU-GPU Parallelism for Deep Learning Using OpenMP and CUDA" (CS 259).
 Verified: 2026-11-15. Result: 22 entries in `report/overleaf/refs.bib`.
 
+> Update 2026-11-16: `refs.bib` was rewritten in IEEE style (initials before surnames, sentence-case titles, abbreviated periodical names, `doi` / `urldate`) and a 23rd entry (the author's own repository) was added. The sources and the fields confirmed below are unchanged; the full re-check of every field against Crossref, arXiv, the web pages and the rendered PDF is in `docs/reference_check.md` (`scripts/verify_references.py`). The table below still shows the 2015-11-15 ACM-style strings; the printed form is in the paper.
+
 ## How entries were verified
 
 Every bibliographic field was taken from a fetched source, not from memory. Author lists and page ranges were also compared programmatically between `refs.bib` and the Crossref record (all 16 DOI-bearing journal/conference entries with a Crossref author list matched in author count, order and family names; pages and volume/issue matched, apart from the notes below).

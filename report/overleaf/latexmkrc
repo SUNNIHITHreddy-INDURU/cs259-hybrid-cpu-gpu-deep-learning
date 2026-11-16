@@ -1,5 +1,5 @@
 # latexmkrc -- read by Overleaf (and by `latexmk`) from the project root.
-# pdfLaTeX + BibTeX (not biber); bibliography style cs259.bst, database refs.bib.
+# pdfLaTeX + BibTeX (not biber); bibliography style cs259ieee.bst (IEEE format), database refs.bib.
 $pdf_mode   = 1;                 # 1 = pdflatex
 $bibtex_use = 2;                 # run bibtex when needed; remove .bbl on clean
 @default_files = ('main.tex');   # never build template_demo.tex by accident
