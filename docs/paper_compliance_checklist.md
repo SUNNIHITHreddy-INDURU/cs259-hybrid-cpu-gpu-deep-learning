@@ -136,5 +136,5 @@ The repository URL in the Availability paragraph and in reference [11] is
 `https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning`. On 2026-11-16 the project (18 commits, sole author) was pushed
 and the repository was set to **public** at the student's request, so the link opens without logging in (HTTP 200 for the repository page
 and for `README.md`). Earlier notes of the student (`requirements/professor_requirements.md`) say the repository must be private;
-that conflicts with a link the instructor can open without an invitation, so the student must decide which one applies
-(public, or private with the instructor added as a collaborator).
+that conflicts with a link the instructor can open without an invitation. The student was told about the earlier note and confirmed on
+2026-11-16 that the repository stays public.

@@ -12,4 +12,4 @@
 | 8 | Overleaf project with code | student | `report/overleaf/` (+ code bundle) | zip imports and compiles |
 | 9 | Slides as PowerPoint, 20-minute talk | student | `presentation/` | timing in speaker notes |
 | 10 | Only measured numbers | student | all tables/figures generated from `results/raw` | scripts in `analysis/` |
-| 11 | Repo private (student's earlier note), sole contributor. 2026-11-16: set public at the student's request so the paper's link works; revisit | student | git history | `git log` scan before every push (assistant-name and secret scan of all revisions: none) |
+| 11 | Repo private (student's earlier note), sole contributor. 2026-11-16: set public at the student's request so the paper's link works; student confirmed after being reminded of the earlier note | student | git history | `git log` scan before every push (assistant-name and secret scan of all revisions: none) |
