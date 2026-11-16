@@ -51,8 +51,9 @@ a partial batch), thread counts, block sizes and stream counts. The tolerance (m
 identical predictions; accuracy 97.97 % everywhere; float32 against an independent float64 NumPy computation: 9.3×10⁻⁵.
 
 **10. What are the limitations?**
-One old GPU (Tesla K40m, compute capability 3.5), one CPU node plus a laptop, untuned kernels (3.3 GFLOP/s serial,
-70.9 OpenMP, 176.5 CUDA kernels alone), a small network that fits in cache, shared machines (median variation 0.2 %, one
+One old GPU (Tesla K40m, compute capability 3.5), one CPU node plus a laptop, untuned kernels (at batch 4096, 3.3 GFLOP/s serial,
+70.9 OpenMP, 176.5 CUDA kernels alone; each rate is the 4.07 GFLOP of stages 1–2 divided by the end-to-end time of the pass, except the
+CUDA-kernels rate, which is divided by the kernel time), a small network that fits in cache, shared machines (median variation 0.2 %, one
 slow pass kept), and a comparison of CUDA with a fixed block against OpenMP with tuned thread count.
 
 **11. Why not PyTorch?**
@@ -116,3 +117,21 @@ be separated from the effect of overlapping.
 **Why did the M4 not take part in the CPU-versus-GPU comparison?**
 It has no NVIDIA GPU, and mixing machines would break the same-machine fairness rule. Its results are used only for the
 OpenMP study.
+
+## Reference facts (material that is not on the 18 slides)
+
+**CUDA block size.** Block size matters only for small batches. At batch 64 the three kernels take 37.3 ms with 8×8 blocks, 34.4 ms with 16×16 and 48.7 ms with 32×32. At batch 4096 the three block sizes are within 0.6 % of each other (23.0 ms with 16×16). Using the best of the three blocks for every batch size would improve the CUDA end-to-end time by at most 2.8 %. The main comparison uses a fixed 16×16 block against tuned OpenMP and hybrid thread counts, so it is labelled "not best-versus-best".
+
+**Compute-only versus end-to-end.** Compute-only means stages 1–3 (hidden layer, output layer, argmax). At batch 4096 the GPU kernels take 23.0 ms and the best OpenMP configuration takes 56.1 ms for the same stages: 2.44×. Dividing OpenMP's end-to-end time (57.3 ms, which includes preprocessing) by the kernel time gives 2.49×, but that divides an end-to-end time by a compute-only time, so it is not used as a result.
+
+**Compiler settings.** On Spartan one binary is built with g++ 11.4.1 through nvcc 11.7. The reference build adds -march=native and the sensitivity build does not. The Mac uses Apple clang without an architecture flag. There is no fast-math. The floating-point contraction options were not set, so each compiler's default applies. With plain -O3 the serial time at batch 4096 is 1,295.6 ms instead of 1,235.4 ms (4.9 % higher). The largest CUDA logit difference in the plain -O3 build is 1.1×10⁻⁵.
+
+**Cold start (10 fresh processes).** CUDA context creation 106.8 ms, weight upload 0.40 ms, buffer allocation 2.97 ms, 110.7 ms in total, about 2.01× one steady-state CUDA pass at batch 256. The first CUDA pass after the set-up shows no penalty. The first 24-thread OpenMP pass is 27.9 % slower than the second. Steady-state times exclude these one-time costs.
+
+**Run-to-run variation.** The median coefficient of variation over all configurations is 0.2 % on Spartan. The largest spread is the pipelined hybrid at batch 256 with 4 threads: mean 28.25 ms, median 26.89 ms, standard deviation 6.10 ms, minimum 26.78 ms, maximum 54.18 ms. One of the 20 passes is above 1.5× the median. It was not removed and is included in all statistics and in the raw data.
+
+**Apple M4 (separate platform, never compared with the GPU).** 10 cores (4 performance, 6 efficiency). At batch 4096 the OpenMP speedup is 3.85× with 4 threads and 5.56× with 10 threads. With one image per batch OpenMP is slower than serial: 0.13× with 10 threads.
+
+**Micro-benchmarks.** PCIe bandwidth, device-memory copy rate, kernel-launch cost, CPU memory bandwidth and OpenMP fork-join cost were measured; their values are in the paper and in `results/raw/*_bench_micro.csv`. No hardware peak figure was assumed.
+
+**Kernel indexing.** In the hidden-layer kernel each thread computes one output element, with the hidden-unit index varying fastest, so consecutive threads read consecutive weight addresses. In the OpenMP version one parallel region covers the pass, each stage is a work-shared loop, and the implicit barrier after each loop is required because the next stage reads data written by other threads.

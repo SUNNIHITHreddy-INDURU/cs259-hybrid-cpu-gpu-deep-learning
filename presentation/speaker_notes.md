@@ -1,367 +1,339 @@
-# Speaker notes — 18 main slides (about 23.25 minutes) + backup slides
+# Speaker notes — exactly 18 slides, about 21.25 minutes
 
 ## Slide 1: Title
 
-**Estimated speaking time:** 0.5 min
+**Estimated speaking time:** 1 min
 
-**On the slide:** Title; Sunnihith Reddy Induru; CS 259 — Advanced Parallel Processing; San José State University; Presentation date: to be added
+**Main purpose:** Introduce the project and state that four execution approaches are compared on one workload.
+
+**Recommended visual:** Dark title slide, no diagram.
+
+**Text on the slide:** Performance Evaluation of Hybrid CPU–GPU Parallelism for Deep Learning Using OpenMP and CUDA; Sunnihith Reddy Induru; CS 259 — Advanced Parallel Processing; San José State University; Presentation date: to be added
 
 **What to say:**
 
 Good morning, everyone. My project is called "Performance Evaluation of Hybrid CPU-GPU Parallelism for Deep Learning Using OpenMP and CUDA."
 
-In one sentence: I took one small neural-network inference workload and ran it four ways - serial on one CPU thread, in parallel on many CPU threads with OpenMP, on the GPU with CUDA, and as a hybrid that uses OpenMP and CUDA together - and I measured when each one is the right choice.
+The project evaluates four execution approaches for exactly the same neural-network inference workload on MNIST digits: a serial CPU baseline, an OpenMP version that uses many CPU threads, a CUDA version that runs the network on the GPU, and a hybrid OpenMP-CUDA pipeline that uses the CPU and the GPU at the same time.
 
-Everything I will show was measured by me on the same machine, and every number in the slides can be traced back to the raw measurement files in my repository.
+I measured all four on the same machine, and I will tell you when each one is the right choice. One note before we start: every number in these slides was measured by me and can be traced back to the raw measurement files in my repository. I also use one extra configuration, called hybrid-sequential, but only as a diagnostic control - I will explain it when we reach the hybrid design.
 
 ## Slide 2: Why Parallelism Matters for Deep Learning
 
 **Estimated speaking time:** 1 min
 
-**On the slide:** Workload → repeated matrix operations → many arithmetic operations → need for CPU and GPU parallelism; GPU kernels fast, application slower (preprocessing, transfers, launch overhead).
+**Main purpose:** Show why parallel execution is needed and plant the idea that a fast kernel is not a fast application.
+
+**Recommended visual:** Four-box flow: workload → repeated operations → computation cost → CPU and GPU parallelism; callout with measured kernel-only vs end-to-end speedup.
+
+**Text on the slide:** Workload → repeated operations → computation cost → CPU and GPU parallelism; fast kernel ≠ fast application.
 
 **What to say:**
 
-Neural-network inference looks complicated, but underneath it is a large number of repeated arithmetic operations - mostly matrix operations that multiply inputs by weights. My network performs about two hundred thousand multiply-adds for every single image, and a pass over the MNIST test set does that ten thousand times.
+Neural-network inference is a large number of repeated mathematical operations - mostly matrix operations. My network does about two hundred thousand multiply-adds per image, and one pass does that for ten thousand images. As the workload grows, the computation cost grows with it, and on one CPU thread it becomes slow.
 
-Run one after another on a single CPU thread, that work becomes slow. There are two standard ways to speed it up. OpenMP splits the work across several CPU threads that share memory. CUDA launches thousands of lightweight threads on a GPU.
+There are two standard remedies: OpenMP uses several CPU threads that share memory, and CUDA uses many thousands of GPU threads.
 
-But there is a trap, and it is the theme of this talk: a GPU can compute very quickly while the complete application is much slower, because the application also has to preprocess the data, copy it across to the GPU, launch the kernels and synchronize. On my measurements the GPU kernels alone are 52.8 times faster than serial code, but the complete CUDA pipeline is only 26.4 times faster. The rest of the talk explains why, and what a hybrid design can do about it.
+But a fast GPU kernel does not always mean a fast complete application. The application also pays for preprocessing, for copying data to and from the GPU, and for kernel-launch overhead. On my measurements the GPU kernels alone are 52.8 times faster than serial, but the complete CUDA pipeline is only 26.4 times faster. The rest of the talk explains why, and what a hybrid design can do about it.
 
 ## Slide 3: Performance Tradeoffs Across CPU, GPU, and Hybrid Execution
 
 **Estimated speaking time:** 1 min
 
-**On the slide:** Main question + RQ1–RQ6.
+**Main purpose:** State the main question and the six research questions that organise the results.
+
+**Recommended visual:** Highlighted question box and six numbered research questions.
+
+**Text on the slide:** Main question + RQ1–RQ6.
 
 **What to say:**
 
-This is the question the whole project asks: how do serial CPU, OpenMP CPU, CUDA GPU and hybrid OpenMP-CUDA implementations compare when they execute the same neural-network inference workload?
+This is the question the whole project asks: how do serial CPU, OpenMP CPU, CUDA GPU, and hybrid OpenMP-CUDA implementations compare when they execute the same neural-network inference workload?
 
-To answer it properly I broke it into six research questions. One: how much speedup does OpenMP give over serial execution? Two: how does CUDA compare with serial and OpenMP? Three: how does batch size change CPU and GPU performance? Four: how much of the GPU's time is data transfer? Five: does hybrid CPU-GPU execution improve end-to-end performance? And six: how do the results relate to Amdahl's law and parallel overhead?
+To answer it properly I broke it into six research questions. One: how much speedup does OpenMP provide over serial execution? Two: how does CUDA compare with CPU execution? Three: how does batch size affect performance? Four: how much GPU time is spent on memory transfer? Five: does hybrid execution improve end-to-end performance? And six: how do the results relate to Amdahl's law and parallel overhead?
 
-I will come back to each of these - the results slides are organised around them.
+The results slides answer these in order: slide 14 gives the end-to-end times, slide 15 speedup and throughput, slide 16 the CUDA overhead and the hybrid, and slide 17 connects everything to Amdahl's law.
 
-## Slide 4: Serial, OpenMP, CUDA, and Hybrid Execution Models
+## Slide 4: Project Objectives
 
-**Estimated speaking time:** 1.5 min
+**Estimated speaking time:** 1 min
 
-**On the slide:** Table: model / main resource / memory model / main parallelism + mini diagrams.
+**Main purpose:** List what was built and measured, and stress that all implementations compute the same workload.
+
+**Recommended visual:** Six numbered objectives and a highlighted fairness statement.
+
+**Text on the slide:** Six objectives; same data, weights, network, workload.
+
+**What to say:**
+
+Here is what I set out to do. One: implement a serial C++ baseline. Two: implement an OpenMP version for the CPU. Three: implement a CUDA version for the GPU. Four: implement a hybrid OpenMP-CUDA pipeline. Five: compare execution time, speedup, throughput, scalability, correctness and overhead across them. And six: determine which implementation is best for different batch sizes.
+
+The point I want to stress at the bottom of the slide is fairness. All four implementations use the same input data, the same trained weights, the same network and the same mathematical workload. Only the execution model changes. That is what makes the comparison meaningful: any difference in time comes from how the work is executed, not from doing different work.
+
+## Slide 5: CPU, OpenMP, GPU, and CUDA
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Teach the four execution models (resource, memory model, parallelism) before any results.
+
+**Recommended visual:** Four-row comparison table with a small 'workers' diagram per model.
+
+**Text on the slide:** Table: model / main resource / memory model / parallelism + mini diagrams.
 
 **What to say:**
 
 Before the results, I want everyone to understand how these four models differ, because the results only make sense with that picture in mind.
 
-Serial execution uses one CPU thread and processes the work strictly one piece after another. OpenMP uses several CPU threads, but they all share the same CPU memory; the work is divided among the threads, and there is a synchronization point at the end of each parallel loop. CUDA runs on the GPU, which has its own separate device memory, so data must be copied there first; the GPU then runs thousands of threads on independent pieces of data. The hybrid model gives different stages to different processors - the CPU threads prepare data while the GPU computes - and the memory is split between host and device.
+Serial CPU: one CPU worker, one thread, doing the work strictly one piece after another, in shared CPU memory. OpenMP CPU: several CPU workers - threads - sharing the same CPU memory; the work is divided among them, with synchronization points between dependent steps. CUDA GPU: many, many GPU workers, but with a separate GPU memory, so data has to be copied there first; the parallelism is massive data parallelism - the same instructions on thousands of independent pieces of data. Hybrid: the CPU and the GPU working together, with coordinated parallelism - the CPU workers prepare the data while the GPU workers compute - and memory split between host and device.
 
-The small diagrams in the last column show the idea: one thread, a fork into several threads and a join, a grid of GPU threads, and CPU plus GPU working together.
+The small pictures in the last column show the idea: one worker; several workers forked from a master and joined again; a big grid of tiny GPU workers; and a CPU worker feeding a GPU.
 
-## Slide 5: MNIST Inference Workload
-
-**Estimated speaking time:** 1 min
-
-**On the slide:** 10,000 test images; batches 1–4096; float32; same weights; accuracy 97.97 %.
-
-**What to say:**
-
-The workload is MNIST handwritten-digit classification, and I measure inference, not training. Each image is 28 by 28 pixels - 784 numbers - and the network turns those 784 features into a predicted digit from zero to nine. The image on the slide is the first real image of the MNIST test set; the weights I use predict a seven for it, which is also its true label.
-
-Every pass processes all ten thousand MNIST test images, in batches of 1, 8, 32, 64, 128, 256, 1,024 or 4,096 images. The computation is float32, and every implementation loads exactly the same trained weight file. The network classifies 97.97 percent of the test images correctly - that number comes from my training log and from the correctness runs.
-
-I chose MNIST because it is a realistic but manageable deep-learning workload: small enough that I could implement it directly in C++ and CUDA, so I control every thread and every copy, without a deep-learning framework hiding them.
-
-## Slide 6: Neural-Network Computation
+## Slide 6: MNIST Dataset and Neural-Network Workload
 
 **Estimated speaking time:** 1 min
 
-**On the slide:** 784 → FC 784→256 → ReLU → FC 256→10 → argmax; four stages; independent output elements.
+**Main purpose:** Define the workload: data, network architecture, precision, batch sizes and the fact that inference (not training) is measured.
+
+**Recommended visual:** Image → pixels → features → network → digit flow, network architecture row, and fact list.
+
+**Text on the slide:** MNIST image → 28×28 → 784 features → network → digit; 784→256→ReLU→10→argmax; 10,000 images, float32, batches 1–4096, accuracy 97.97 %.
 
 **What to say:**
 
-This is the entire network. 784 input features go through a fully connected layer from 784 to 256 units, a ReLU activation, a second fully connected layer from 256 to 10 outputs, and an argmax that picks the predicted digit. That is two hundred and three thousand multiply-adds per image.
+The workload is MNIST digit classification - inference only, no training. The image is the first real test image: 28 by 28 pixels, so 784 input features, and the network predicts seven, which is also its true label.
 
-In the program the work is split into four measured stages: preprocessing, which standardizes each image; the hidden layer; the output layer; and the argmax.
+The architecture is small: 784 inputs, a hidden layer of 256 units, a ReLU, an output layer of 10 units, and an argmax that picks the digit. Everything is float32.
 
-The key point for parallelism is at the bottom: each output element - for example hidden unit j of image b - is a dot product that does not depend on any other output element in the same layer. So all of them can be computed at the same time. That independence is exactly what OpenMP threads and CUDA threads exploit. What is not independent is the order of the layers: the output layer needs the hidden layer first.
+Every pass processes all ten thousand test images, in batches of 1, 8, 32, 64, 128, 256, 1,024 or 4,096. All implementations load the same trained weights, and the model classifies 97.97 percent correctly - confirmed by my training log and the correctness runs.
 
-## Slide 7: Four Implementations of the Same Computation
+I chose MNIST because it is realistic but small enough to implement directly in C++ and CUDA, so I control every thread and every copy.
 
-**Estimated speaking time:** 1.5 min
+## Slide 7: Overall System Architecture
 
-**On the slide:** Serial | OpenMP | CUDA (1-thread preprocessing) | Hybrid; hybrid-sequential = diagnostic control.
+**Estimated speaking time:** 1 min
 
-**What to say:**
+**Main purpose:** Show that the mathematical workload is identical while the execution model changes.
 
-Here are the four implementations side by side, colour-coded by the resource that executes each stage.
+**Recommended visual:** Workload pipeline row with four aligned execution lanes (serial, OpenMP, CUDA, hybrid).
 
-Serial, in gray: one CPU thread does the preprocessing, the hidden layer and the output layer with argmax. OpenMP, in blue: the same stages, but each one is split across T CPU threads. CUDA: the preprocessing still runs on a single CPU thread - which is why I call it "CUDA with single-threaded preprocessing", not "GPU-only" - then the batch is copied to the GPU, three kernels run, and the results are copied back. Hybrid: OpenMP threads do the preprocessing into pinned memory, the copies are asynchronous, the kernels run on three CUDA streams, so different batches overlap.
-
-One more thing, at the bottom of the slide: hybrid-sequential is a diagnostic control, not a fifth implementation. It uses OpenMP preprocessing and CUDA computation, but without overlapping batches. I use it later to separate two effects: the benefit of parallel preprocessing and the benefit of overlap.
-
-## Slide 8: CUDA Host–Device Execution
-
-**Estimated speaking time:** 1.5 min
-
-**On the slide:** Host memory → H2D copy → device memory → kernel launch → grid → blocks → threads → D2H copy → predictions; 8×8, 16×16, 32×32.
+**Text on the slide:** Workload row; serial / OpenMP / CUDA / hybrid lanes aligned under the stages.
 
 **What to say:**
 
-This slide shows how a CUDA program works. On the left is the data path. The CPU is the host and the GPU is the device, and they have separate memories. The input batch starts in CPU memory, is copied across the PCIe connection into GPU global memory, and then the host launches a kernel. When the kernel finishes, the predictions are copied back.
+This slide has the whole system on one page. The top row is the workload, and it is the same for everybody: MNIST input, preprocessing, hidden layer, ReLU, output layer, argmax, predicted digit.
 
-On the right is how the GPU organizes its threads. A kernel launch creates a grid. The grid is made of thread blocks, and each block is made of threads. In my hidden-layer kernel a block is a square of d by d threads, and thread tx, ty of block bx, by computes exactly one output element: hidden unit j equals bx times d plus tx, for image b equals by times d plus ty. I tested three block sizes: 8 by 8, which is 64 threads, 16 by 16, which is 256 threads and my default, and 32 by 32, which is 1,024 threads.
+Underneath, each lane shows who executes those stages. Serial, in gray: every stage runs on one CPU thread. OpenMP, in blue: every stage runs on multiple CPU threads. CUDA: the preprocessing still runs on a single CPU thread - which is why I call it the CUDA pipeline with single-threaded preprocessing and not a GPU-only version - and the neural-network layers run on the GPU, with a host-to-device copy before and a device-to-host copy after. Hybrid: OpenMP threads do the preprocessing, CUDA does the computation, and different batches overlap in time.
 
-Two consequences matter for the results. First, every copy and every launch costs time that has nothing to do with computation. Second, for a batch of just one image the grid has very few useful threads, so the GPU is badly under-used.
+The message of the slide is at the bottom: the mathematical workload stays the same, only the execution model changes.
 
-## Slide 9: Hybrid CPU–GPU Pipeline
+## Slide 8: Serial CPU Implementation
 
-**Estimated speaking time:** 2 min
+**Estimated speaking time:** 1 min
 
-**On the slide:** OpenMP preprocesses batch i+1 while CUDA copies/computes batch i; three streams; layers within a batch stay ordered; overlap between batches.
+**Main purpose:** Explain the baseline that all speedups and the correctness checks refer to.
+
+**Recommended visual:** Short pseudocode box and a one-thread timeline of sequential images.
+
+**Text on the slide:** Pseudocode: per image → preprocess, hidden, ReLU, output, select digit; one thread; baseline and correctness reference.
 
 **What to say:**
 
-This is the central idea of the hybrid implementation. In the CUDA pipeline, the GPU sits idle while the CPU preprocesses, and the CPU waits while the GPU works. The hybrid removes that waiting.
+The serial implementation is the simplest. For each image: preprocess, compute the hidden layer, apply ReLU, compute the output layer, and select the predicted digit. One CPU thread does everything, in order.
 
-The diagram is a schematic, not measured data. The top lane is the CPU: OpenMP threads preprocess batch 1, then batch 2, then batch 3. Below are three CUDA streams. As soon as batch 1 is preprocessed, its host-to-device copy, its kernels and its device-to-host copy go into stream 0. While the GPU works on batch 1, the CPU is already preprocessing batch 2, which is then handled by stream 1, and batch 3 goes to stream 2. Batches are assigned round-robin, and each stream has its own device buffers and its own pinned host buffers. Pinned memory is what allows copies to be asynchronous.
+It matters for two reasons. It is the baseline - every speedup in this talk is relative to the serial time on the same machine and batch size - and it is the reference for correctness: every other implementation is compared with its outputs.
 
-The important statement is on the slide: within one batch, the hidden layer, the output layer and the argmax depend on each other, so they stay in order. The overlap happens only between different batches.
+On the Spartan node a serial pass takes 1235.4 milliseconds at batch 4096, and between 1234.6 and 1235.7 milliseconds across all batch sizes - essentially independent of batch size - about 8,094 images per second.
 
-Finally, the hybrid-sequential control: it uses OpenMP preprocessing but waits for each batch to finish before starting the next. Comparing the CUDA pipeline, the control and the full hybrid lets me say how much of the gain comes from parallel preprocessing, and how much comes from overlap.
-
-## Slide 10: Experimental Setup and Measurement Protocol
+## Slide 9: OpenMP CPU Implementation
 
 **Estimated speaking time:** 1.25 min
 
-**On the slide:** Setup table; Spartan node for CPU-vs-GPU; M4 separate.
+**Main purpose:** Explain fork-and-join execution, why synchronization is needed, and which thread counts were used.
+
+**Recommended visual:** Fork-join diagram (main thread → threads → barrier → next stage) and thread-count chips.
+
+**Text on the slide:** Fork-and-join; threads share memory; synchronization between stages; thread counts: Spartan 1,2,4,8,12,16,24; M4 1,2,4,6,8,10.
 
 **What to say:**
 
-Here is exactly how I measured. The dataset is the ten thousand MNIST test images in float32. Each configuration gets three warm-up passes that are not recorded, followed by twenty recorded passes - and every recorded pass is kept as a row in a raw CSV file; nothing is removed.
+OpenMP uses a fork-and-join model. The main CPU thread forks a team of threads. Each thread processes a separate portion of the work - different images or groups of hidden units - and these calculations are independent. The threads share CPU memory, so nothing is copied. At the end of each parallel loop all threads meet at a barrier before the next stage starts, because the next stage needs the previous results.
 
-GPU stages are timed with CUDA events; the end-to-end time is the wall-clock time of the whole pass. One-time costs - creating the CUDA context, allocating buffers, uploading the weights - are excluded from the steady-state timing, and I measured them separately: about 110.7 milliseconds in total.
+Thread counts: on the Spartan node 1, 2, 4, 8, 12, 16 and 24, because my job was allocated 24 CPUs; on the Apple M4 laptop 1, 2, 4, 6, 8 and 10 - a separate platform, never part of the GPU comparison.
 
-The main platform is a Spartan GPU node with a Tesla K40m and two Xeon E5-2680 v4 CPUs. The node has 28 physical cores and 28 logical CPUs according to lscpu, and my jobs were allocated 24, so OpenMP uses at most 24 threads.
+Typical limits are thread overhead, synchronization and memory bandwidth. In my data the synchronization cost is visible at tiny batches: one image per batch saturates at 7.6 times, while large batches reach 21.6 times with 24 threads, an efficiency of 0.90. I did not isolate memory bandwidth.
 
-Two rules matter. All CPU-versus-GPU comparisons use the Spartan node only. The Apple M4 laptop is used only as a separate CPU scalability platform, and its numbers are never mixed with the Spartan GPU comparisons.
+## Slide 10: CUDA GPU Implementation
 
-## Slide 11: Correctness Across Implementations
+**Estimated speaking time:** 1.25 min
 
-**Estimated speaking time:** 0.75 min
+**Main purpose:** Explain the host–device model and the grid → block → thread hierarchy, and that kernel time and end-to-end time are different measurements.
 
-**On the slide:** Correctness table: comparisons passed, max logit difference, prediction agreement, accuracy.
+**Recommended visual:** Host/device data-path flow plus grid, block and thread diagram with block-size options.
+
+**Text on the slide:** Host memory → H2D → GPU memory → kernel launch → grid/blocks/threads → computation → D2H → predictions; kernel time ≠ end-to-end time.
 
 **What to say:**
 
-Before I trust any timing, I checked that every implementation computes the same thing. Every implementation is compared with the serial reference on all ten thousand images, over several batch sizes, thread counts, block sizes and stream counts - eighty comparisons in the reference build, and all of them pass.
+On the left is the data path. The CPU is the host, the GPU is the device, and they have separate memories. The batch starts in CPU memory, is copied over PCIe into GPU memory, the host launches a kernel, the kernel computes, and the predictions are copied back.
 
-OpenMP is bit-identical to serial. CUDA and both hybrid variants differ by at most 7.6×10⁻⁶ in the logits - which is tiny - and they predict exactly the same digit as serial for every image. Accuracy is 97.97 percent everywhere.
+On the right is how the GPU organizes threads. A launch creates a grid; the grid is made of blocks; each block is made of threads. In my hidden-layer kernel a block is d by d threads, and thread tx, ty of block bx, by computes exactly one output: hidden unit j equals bx times d plus tx, for image b equals by times d plus ty. Threads compute independent outputs. I used 16 by 16 blocks - 256 threads - and also measured 8 by 8 and 32 by 32.
 
-The small differences are expected: the operations and the source-level order of the sums are the same, but compilers can apply floating-point optimizations such as fused multiply-add. The correctness checks run outside the timed region, and I would not accept a performance result from an implementation that failed them.
+One distinction matters for the whole talk: kernel time and end-to-end time are different measurements. Kernel time is only the GPU computation; end-to-end includes preprocessing, both copies, launches and synchronization. I never treat kernel-only speed as the speed of the application.
 
-## Slide 12: OpenMP Scalability
+## Slide 11: Hybrid OpenMP–CUDA Pipeline
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Explain how OpenMP preprocessing, pinned memory, asynchronous copies and three CUDA streams make different batches overlap, and what hybrid-sequential is.
+
+**Recommended visual:** Six-box hybrid flow plus a CPU lane and three CUDA stream lanes showing batch overlap (schematic).
+
+**Text on the slide:** OpenMP preprocessing → pinned memory → async transfer → CUDA streams → GPU computation → predictions; timeline; layers ordered within a batch; hybrid-sequential = control.
+
+**What to say:**
+
+This is the central idea. In the plain CUDA pipeline the GPU idles while the CPU preprocesses, and the CPU waits while the GPU works. The hybrid removes that waiting.
+
+The flow at the top: OpenMP threads preprocess into pinned host memory; pinned memory allows asynchronous transfers; the transfers go into CUDA streams; the GPU computes; the predictions come back.
+
+The timeline is a schematic, not measured data. The CPU preprocesses batch 1, then 2, then 3. As soon as batch 1 is ready, its copy, kernels and copy back go into stream 0; while the GPU works on it, the CPU is already preprocessing batch 2, which stream 1 handles, and batch 3 goes to stream 2. So OpenMP preprocesses future batches while CUDA processes earlier ones.
+
+The purple box matters: inside one batch the hidden layer, output layer and argmax depend on each other, so they stay in order; only different batches overlap.
+
+Hybrid-sequential - OpenMP preprocessing with no overlap - is only a diagnostic control. It separates the benefit of parallel preprocessing from the benefit of overlap.
+
+## Slide 12: Experimental Setup and Measurement Protocol
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Document exactly what was measured and why each important decision was made.
+
+**Recommended visual:** Three-column table: item, configuration, reason.
+
+**Text on the slide:** Setup table with reasons.
+
+**What to say:**
+
+Here is exactly how I measured, and why. The workload is the ten thousand MNIST test images in float32 through the 784-256-10 network, in batches from 1 to 4,096 - covering both latency-bound and throughput-bound behavior.
+
+The main platform is a Spartan GPU node: two Xeon E5-2680 v4 CPUs - lscpu reports 28 physical cores and 28 logical CPUs, and my jobs were allocated 24, so OpenMP uses at most 24 threads - and a Tesla K40m with CUDA 11.7. Compilers are g++ 11.4.1 with O3 and march native, and nvcc 11.7. The Apple M4, with clang 21, is only a separate CPU study.
+
+Protocol: three unrecorded warm-up passes to remove start-up effects, then twenty recorded passes, all kept and reported with mean, median, standard deviation, minimum, maximum and 95 percent confidence intervals. GPU stages use CUDA events; end-to-end time is wall clock. GPU initialization, allocation and weight upload are one-time costs, excluded from steady state and measured separately: 110.7 milliseconds. The CUDA block is fixed at 16 by 16, and CPU-versus-GPU comparisons use one node only.
+
+## Slide 13: Correctness Validation Before Performance Comparison
+
+**Estimated speaking time:** 1 min
+
+**Main purpose:** Show that all implementations produce equivalent outputs before any timing is interpreted.
+
+**Recommended visual:** Accuracy-vs-correctness definition boxes and a comparison table.
+
+**Text on the slide:** Accuracy vs correctness; table: passed, max logit difference, agreement, accuracy.
+
+**What to say:**
+
+Before interpreting any timing I checked correctness - and I separate two ideas. Accuracy: how well the model classifies MNIST, 97.97 percent. Correctness: whether all implementations produce equivalent outputs.
+
+The table compares each implementation with the serial reference on all ten thousand images, over several batch sizes, thread counts, block sizes and stream counts - eighty comparisons, all passing. OpenMP is bit-identical. CUDA and both hybrid variants differ by at most 7.6×10⁻⁶ in the logits and predict exactly the same digit for every image.
+
+Small floating-point differences are possible - same operations and source-level order, but compilers may apply optimizations such as fused multiply-add - so I fixed a tolerance beforehand: maximum logit difference 1e-4, agreement at least 99.9 percent. A faster implementation is invalid if its output is incorrect.
+
+## Slide 14: End-to-End Execution Time Across All Implementations
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Compare all four implementations on one graph and locate the performance crossovers.
+
+**Recommended visual:** One native line chart (log time axis) with serial, OpenMP, CUDA pipeline and hybrid pipeline versus batch size, with 95% error bars.
+
+**Text on the slide:** Fastest at batch 1/8: OpenMP; from batch 32: hybrid; CUDA pipeline reaches OpenMP around batch 128–256.
+
+**What to say:**
+
+This is the main result: all four implementations on one graph - serial, OpenMP with its best thread count, the CUDA pipeline and the hybrid. The y-axis is the time of one pass over ten thousand images in milliseconds, log scale, with tiny 95 percent confidence intervals. Everything is the Spartan node.
+
+Fastest for small batches: OpenMP. At batch 1 it needs 162.8 milliseconds, the hybrid 650.9, and the CUDA pipeline 1507.0 - slower than serial at 1234.8. At batch 8 OpenMP still leads, 75.5 against 87.5.
+
+Fastest for large batches: the hybrid - 24.7 milliseconds at batch 4096, against 46.7 for the CUDA pipeline and 57.3 for OpenMP.
+
+The crossover: the hybrid overtakes OpenMP at batch 32; the plain CUDA pipeline catches OpenMP only around batch 128 to 256.
+
+Why is CUDA slower for small batches? Each batch pays for launches, two copies and a synchronization, and one image leaves most GPU threads idle. Why does the hybrid win for larger batches? The GPU gets enough work, the preprocessing is parallel, and it overlaps with GPU work on another batch.
+
+## Slide 15: Speedup and Throughput Across All Implementations
 
 **Estimated speaking time:** 1.5 min
 
-**On the slide:** Spartan: time, speedup, efficiency vs threads; 21.6× at 24 threads (batch 4096); batch 1 saturates; M4 in backup.
+**Main purpose:** Show relative performance (speedup) and absolute performance (throughput) of all four implementations side by side.
+
+**Recommended visual:** Two native charts: speedup over serial (×) and throughput (images per second, log axis), each with all four implementations.
+
+**Text on the slide:** Speedup = serial time / implementation time; throughput = 10,000 / time (s). Batch 4096: speedup OpenMP 21.6×, CUDA 26.4×, hybrid 50.0×.
 
 **What to say:**
 
-RQ1: how much speedup does OpenMP give? These three charts are all from the Spartan node, for three batch sizes - 1, 256 and 4096 images - against the number of OpenMP threads.
+Same four implementations, two different views. On the left is speedup, defined as the serial time divided by the implementation time, so serial is the line at one. On the right is throughput, ten thousand images divided by the pass time in seconds - how many images per second each implementation processes.
 
-Left: execution time per pass on a log scale. For batches of 256 and 4096 it falls from about twelve hundred milliseconds with one thread to about 57.3 milliseconds with 24 threads. Middle: the speedup over serial. For large batches it follows the ideal line closely - 21.6 times with 24 threads at batch 4096. Right: parallel efficiency, 0.90 at 24 threads for batch 4096.
+Read the left chart first. At batch 4096 OpenMP is 21.6 times faster than serial, the CUDA pipeline 26.4 times, and the hybrid 50.0 times. At batch 1 the picture is different: OpenMP gives 7.6 times, the hybrid 1.9 times, and the CUDA pipeline 0.8 - below one, which means slower than serial.
 
-Batch size 1 behaves differently: the speedup saturates at about 7.6 times and efficiency drops to 0.31, because one image offers only 16 work items per stage and every stage ends in a barrier - there is too little work per synchronization.
+The right chart says the same thing in images per second. Serial processes about 8,094 images per second. At batch 4096 OpenMP reaches 174,451, the CUDA pipeline 214,024, and the hybrid 404,844 images per second. Notice that serial and OpenMP throughput barely change with batch size, while the GPU-based implementations improve a lot, because larger batches amortize the fixed launch and copy costs.
 
-The Apple M4 is a different story and is shown separately in the backup: its speedup follows the ideal up to its 4 performance cores - 3.85 times with 4 threads - then flattens at 5.6 times with 10 threads. The two machines are different architectures, so they must be read separately. I did not isolate memory bandwidth as a cause of any flattening; what I can say is what the data shows.
+So: the hybrid delivers the highest throughput from batch 32 on, OpenMP is best for the smallest batches, and the CUDA pipeline with single-threaded preprocessing is never the best.
 
-## Slide 13: CUDA Computation and End-to-End Performance
+## Slide 16: CUDA Overhead and Hybrid Performance
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Explain why CUDA kernels are fast but the CUDA pipeline is slower, and quantify what OpenMP preprocessing and CPU–GPU overlap each contribute.
+
+**Recommended visual:** Left: line chart of kernel-only, CUDA end-to-end, hybrid-sequential and hybrid-pipelined; right: stacked percentage chart of CUDA pipeline stages.
+
+**Text on the slide:** Batch 4096: kernels 23.0 ms, CUDA end-to-end 46.7 ms, hybrid-sequential 28.8 ms, hybrid-pipelined 24.7 ms; shares: kernels 49.3 %, preprocessing 43.3 %, copies 7.3 %.
+
+**What to say:**
+
+This slide explains the gap between a fast kernel and a slower pipeline, and what the hybrid recovers. On the left are four things: CUDA kernels only, which exclude preprocessing and copies; CUDA end-to-end, the full pipeline; hybrid-sequential, the control with OpenMP preprocessing but no overlap; and the pipelined hybrid.
+
+At batch 4096 the kernels take 23.0 milliseconds, but the complete CUDA pipeline takes 46.7. The stacked bar shows why: kernels are 49.3 percent, single-threaded CPU preprocessing 43.3 percent - 20.2 milliseconds at every batch size - and copies only 7.3 percent. At batch 1 copies are 19.8 percent and launch and synchronization 6.4 percent; that gray part is a residual, not directly timed.
+
+OpenMP preprocessing alone takes the pass from 46.7 to 28.8 milliseconds, 1.62 times faster. The asynchronous overlap brings it to 24.7 - another 1.16 times, and only 1.07 times the kernel-only time.
+
+It depends on batch size: at batch 1 the hybrid needs 650.9 milliseconds against 162.8 for OpenMP, so it is not best there; it overtakes OpenMP from batch 32.
+
+## Slide 17: Amdahl’s Law and Performance Bottlenecks
+
+**Estimated speaking time:** 1.25 min
+
+**Main purpose:** Connect Amdahl's law to the measured results and explain which serial costs limit the speedup.
+
+**Recommended visual:** Formula, native chart of measured speedup vs fitted Amdahl curves (batch 1 and 4096), and four connecting statements.
+
+**Text on the slide:** S(N) = 1/((1−P)+P/N); Xeon f = 0.006 (batch 4096), 0.088 (batch 1).
+
+**What to say:**
+
+Amdahl's law: S of N equals one over one minus P plus P over N. P is the parallel portion and one minus P the serial portion; however many threads you add, speedup cannot exceed one over the serial fraction. Serial preprocessing, transfers, synchronization and kernel launches sit in that serial part.
+
+I fitted it to my OpenMP data. For batch 4096 on the Xeon the serial fraction is only 0.006, a ceiling of 179.3 times, so the 21.6 times measured at 24 threads is not limited by it. For one image per batch it is 0.088, a ceiling of 11.4 times, and the measured curve flattens at 7.6 times: small batches carry more overhead relative to useful work. On the Apple M4, a separate platform, speedup flattens beyond its four performance cores, at 5.6 times with ten threads.
+
+The same logic explains the GPU: kernels are 52.8 times faster than serial, but transfers and single-threaded preprocessing act like a serial part, so the pipeline reaches 26.4 times. The hybrid overlaps independent stages of different batches and reaches 50.0 times.
+
+## Slide 18: Conclusions, Limitations, and Future Work
 
 **Estimated speaking time:** 1.75 min
 
-**On the slide:** End-to-end: serial, OpenMP, CUDA pipeline. Compute-only: serial, OpenMP, CUDA kernels. Kernels 52.8× vs pipeline 26.4× (batch 4096); batch 1 CUDA 0.82×.
+**Main purpose:** Summarise the verified conclusions, state the limitations honestly, list future work and end with the main message.
+
+**Recommended visual:** Three-column text (conclusions, limitations, future work) and a closing statement.
+
+**Text on the slide:** Five conclusions; six limitations; seven future-work items; closing statement.
 
 **What to say:**
 
-RQ2 and RQ3: how does CUDA compare, and how does batch size matter? I split this slide into two charts on purpose, because they answer different questions.
+The conclusions, all backed by measurements. One: OpenMP improves CPU execution - 21.6 times with 24 threads on the Xeon at large batches - but reaches scaling limits at tiny batches and on the M4's efficiency cores. Two: CUDA kernels give strong computational speedup, 52.8 times over serial compute-only at batch 4096. Three: CUDA end-to-end performance is limited by preprocessing and transfers - the complete pipeline reaches 26.4 times. Four: hybrid execution can cut end-to-end time - 24.7 milliseconds against 46.7 for the CUDA pipeline at batch 4096. Five: the best implementation depends on batch size - OpenMP for batches of 1 and 8, the hybrid from batch 32.
 
-The left chart is end-to-end: the time of the whole pass, including preprocessing, copies, launches and synchronization. It shows serial, the best OpenMP configuration, and the CUDA pipeline with single-threaded preprocessing. The right chart is compute-only: only the hidden layer, the output layer and the argmax - for the CPU it is the sum of those timed stages, for the GPU it is the kernel time measured with CUDA events.
+Limitations: an older Tesla K40m, a small fully connected network, straightforward rather than fully tuned kernels, a shared environment, results that may differ on modern GPUs, and different CPU architectures on the Mac and Spartan. CUDA also used a fixed block size while OpenMP and the hybrid used their best thread count.
 
-Compute-only, the GPU kernels are 52.8 times faster than serial and 2.44 times faster than the best OpenMP configuration at batch 4096. End-to-end, the CUDA pipeline is 26.4 times faster than serial and only 1.23 times faster than OpenMP - because preprocessing and copies are included. Notice the batch-1 end: CUDA end-to-end is 0.82 times serial, which means it is slower; even compute-only the kernels are just 1.11 times faster. The GPU needs enough work to amortize its overheads.
+Future work: shared-memory tiling, GPU-side preprocessing, cuBLAS, a newer GPU, larger and convolutional networks, and energy measurements.
 
-A caution on one number: comparing the kernel time with OpenMP's end-to-end time would give about 2.49; the like-for-like compute-only comparison is 2.44.
-
-## Slide 14: Where the CUDA Pipeline Time Goes
-
-**Estimated speaking time:** 1.25 min
-
-**On the slide:** Batch 1: kernels 72.4 %, copies 19.8 %; batch 4096: kernels 49.3 %, preprocessing 43.3 %, copies 7.3 %.
-
-**What to say:**
-
-RQ4: how much GPU time is spent on data transfer? This stacked chart splits the end-to-end time of the CUDA pipeline into stages, as a percentage, for each batch size.
-
-Look at the two ends. At batch 1 the kernels are 72.4 percent of the time, the copies are 19.8 percent, and launch, API and synchronization overhead is 6.4 percent. At batch 4096 the picture flips: kernels are 49.3 percent, the single-threaded CPU preprocessing is 43.3 percent - 20.2 milliseconds that stay constant for every batch size - and the copies are only 7.3 percent.
-
-So transfers matter most for small batches, but for large batches the dominant non-GPU cost is not the PCIe copy, it is the single-threaded preprocessing on the CPU. That is the lesson: a fast kernel does not automatically make a fast application. The gray "other" segment is the part of the wall-clock time not covered by the four timed stages - launch, API calls and synchronization - so it is a residual, not a directly timed quantity.
-
-## Slide 15: Hybrid Execution Reduces End-to-End Time
-
-**Estimated speaking time:** 1.75 min
-
-**On the slide:** Hybrid 24.7 ms vs CUDA pipeline 46.7 ms (batch 4096); effects: 1.62× preprocessing, 1.16× overlap; hybrid faster than OpenMP from batch 32.
-
-**What to say:**
-
-RQ5: does hybrid execution improve end-to-end performance? This chart compares three configurations at every batch size: the CUDA pipeline, the hybrid-sequential control, and the pipelined hybrid. Each hybrid point uses the best OpenMP thread count for that batch size.
-
-The pipelined hybrid is faster than the CUDA pipeline at all eight batch sizes - by 1.89 to 2.57 times; the 95 percent confidence intervals are tiny and a Welch test gives p below ten to the minus thirty-two for every batch size. At batch 4096 it needs 24.7 milliseconds against 46.7.
-
-Two effects, separated by the control. First, parallel preprocessing alone - the hybrid-sequential control - gives 1.62 times over the CUDA pipeline at batch 4096. Second, overlapping the batches adds another 1.16 times. The hybrid time is only 1.07 times the kernel-only time, so preprocessing and copies are nearly hidden behind the kernels.
-
-But I do not claim hybrid is always best. Against the best OpenMP configuration, the hybrid is faster only from batch 32 upward; at batch sizes 1 and 8, plain OpenMP is faster, because there the GPU path is dominated by overhead.
-
-## Slide 16: The Best Implementation Depends on Batch Size
-
-**Estimated speaking time:** 1.25 min
-
-**On the slide:** Fastest / runner-up per batch size (end-to-end, Spartan).
-
-**What to say:**
-
-This table brings the results together. For every batch size it lists the fastest end-to-end implementation, its time, the runner-up and its time - all measured on the Spartan node.
-
-For a batch of one image and a batch of eight, plain OpenMP on the multicore CPU is the fastest: the GPU path is dominated by launch, copy and synchronization overhead. From batch 32 upward the pipelined hybrid is fastest, by about a factor of two over the runner-up, because the GPU now gets enough work and the CPU preprocessing overlaps with GPU execution.
-
-Notice what never wins: the CUDA pipeline with single-threaded preprocessing is never the fastest end-to-end, even though its kernels are the fastest compute-only from batch 32 on. That is the whole message of the project: the choice depends on workload size and overhead, not on assuming that one platform is always fastest.
-
-One honest caveat that is also in the paper: CUDA uses a fixed 16 by 16 block, while OpenMP and the hybrid use their best thread count - so this is not a best-versus-best comparison. The best CUDA block would change the CUDA time by at most 2.8 percent.
-
-## Slide 17: Why Speedup Eventually Stops Increasing
-
-**Estimated speaking time:** 1.25 min
-
-**On the slide:** S(N) = 1/((1−P)+P/N); Xeon f = 0.006 (batch 4096), 0.088 (batch 1); limitations list.
-
-**What to say:**
-
-RQ6: how do the results relate to Amdahl's law? The law says that if P is the parallel portion of the work, the speedup on N processors is one divided by one minus P plus P over N. The serial portion, one minus P, limits the speedup no matter how many threads you add.
-
-I fitted this to my OpenMP measurements. For batch 4096 on the Xeon the fitted serial fraction is only 0.006, which would allow a ceiling of 179.3 times - so the 21.6 times I measured with 24 threads is not limited by the serial fraction. For a batch of one image the fitted serial fraction is 0.088, a ceiling of only 11.4 times. So the batch size changes the effective serial fraction.
-
-The same logic explains the CUDA pipeline: its single-threaded preprocessing, copies and launches behave like a serial part, which is why the end-to-end speedup is smaller than the kernel speedup, and why the hybrid, which parallelizes and overlaps that part, helps.
-
-And the limitations, which I want to state clearly: the GPU is an old Tesla K40m; the network is small and fully connected; my kernels are not tuned; the cluster is shared; the comparison uses a fixed CUDA block against tuned OpenMP thread counts; and results may differ on modern GPUs.
-
-## Slide 18: Conclusions and Future Work
-
-**Estimated speaking time:** 1.5 min
-
-**On the slide:** Four conclusions; future work; final statement.
-
-**What to say:**
-
-Let me finish with four conclusions, all of them backed by measurements. One: OpenMP gives strong CPU speedup - 21.6 times with 24 threads on the Xeon for large batches - until scaling limits appear: batch size 1, and on the Apple M4 the efficiency cores. Two: CUDA kernels can be very fast - 52.8 times faster than serial compute-only - but the end-to-end pipeline is only 26.4 times, because it includes preprocessing and transfers. Three: hybrid execution reduces end-to-end time when CPU preprocessing overlaps with GPU computation - 24.7 milliseconds against 46.7 for the CUDA pipeline at batch 4096. Four: the best execution model depends on batch size: OpenMP for batches of 1 and 8, the hybrid from batch 32 up.
-
-Future work: shared-memory-tiled CUDA kernels, a comparison with cuBLAS, GPU-side preprocessing, a newer GPU, larger networks, convolutional networks, and energy measurements.
-
-The main result is that CPU, GPU and hybrid parallelism should be selected according to workload size and overhead - not by assuming that one platform is always fastest. Thank you. I am happy to take questions; I have backup slides for the full timing table, block sizes, compiler flags, cold start, variation, hardware limits, correctness details and kernel code.
-
-## Backup 19: Backup: Full end-to-end timing table (Spartan)
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Full timing table.
-
-**What to say:**
-
-Full table of end-to-end times per pass for every batch size. OpenMP and Hybrid show the best thread count in brackets. The GPU-kernels column is the compute-only kernel time. Speedups are over serial.
-
-## Backup 20: Backup: Compute-only comparison (stages 1–3)
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Compute-only table.
-
-**What to say:**
-
-Compute-only means just the hidden layer, output layer and argmax. At batch 4096 the GPU kernels take 23.0 milliseconds against 56.1 for the best OpenMP configuration: 2.44 times. If one divides OpenMP's end-to-end time, which includes preprocessing, by the kernel time, one gets about 2.49 - but that mixes a compute-only number with an end-to-end number, so I do not use it.
-
-## Backup 21: Backup: OpenMP on the Apple M4 (separate platform)
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** M4 OpenMP charts.
-
-**What to say:**
-
-The Apple M4 has 10 cores: 4 performance and 6 efficiency. The speedup follows the ideal line up to 4 threads - 3.85 times at batch 4096 - then flattens at 5.56 times with 10 threads. With one image per batch OpenMP is slower than serial: 0.13 times with 10 threads. These results are never compared with the Spartan GPU results.
-
-## Backup 22: Backup: CUDA block-size comparison
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Block-size chart.
-
-**What to say:**
-
-Block size only matters at small batches. At batch 64 the kernels take 37.3 ms with 8 by 8 blocks, 34.4 with 16 by 16 and 48.6 with 32 by 32. At batch 4096 all three are within one percent. If the best of the three block sizes were used, the CUDA end-to-end time would improve by at most 2.8 percent, so the main comparison, which uses a fixed 16 by 16 block, is not best-versus-best, and is labelled that way.
-
-## Backup 23: Backup: Compiler settings and flag sensitivity
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Compiler table.
-
-**What to say:**
-
-Compiler settings of the three builds. On Spartan one binary is built with g++ 11.4.1 through nvcc 11.7; the reference build adds -march=native, the sensitivity build does not. The Mac uses Apple clang with no architecture flag. There is no fast-math, and the floating-point contraction options were not set, so each compiler's default applies. Plain -O3 changes the serial time by about five percent.
-
-## Backup 24: Backup: Cold-start timing
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Cold-start table.
-
-**What to say:**
-
-One-time costs excluded from the steady-state times, measured in ten fresh processes: CUDA context creation 106.8 ms on average, weight upload 0.40 ms, buffer allocation 2.97 ms - 110.7 ms in total, about 2.01 times a steady-state CUDA pass. After the set-up the first CUDA pass shows no penalty; the first 24-thread OpenMP pass is 27.9 percent slower than the second.
-
-## Backup 25: Backup: Run-to-run variation
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Variation table.
-
-**What to say:**
-
-Variation is small: the median coefficient of variation is 0.2 percent on Spartan. The largest is the hybrid-pipelined configuration at batch 256 with 4 threads: mean 28.25 ms, median 26.89, standard deviation 6.10, minimum 26.78, maximum 54.18. One pass is above 1.5 times the median. I did not remove it; it is in all statistics and in the raw data.
-
-## Backup 26: Backup: Measured hardware limits (Spartan)
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Micro-benchmarks.
-
-**What to say:**
-
-Micro-benchmark results used in the analysis: PCIe bandwidth, device memory copy rate, kernel launch cost, CPU memory bandwidth and OpenMP fork-join cost. No hardware peak numbers are assumed; everything here was measured.
-
-## Backup 27: Backup: Detailed correctness results (Spartan, reference build)
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Detailed correctness.
-
-**What to say:**
-
-Detailed correctness table for the reference build: number of passing comparisons, maximum and mean logit difference, minimum prediction agreement and accuracy for each comparison group. In the plain -O3 sensitivity build the largest CUDA difference is 1.1×10⁻⁵.
-
-## Backup 28: Backup: Kernel and OpenMP code details
-
-**Estimated speaking time:** 0 min
-
-**On the slide:** Code excerpts.
-
-**What to say:**
-
-Two short excerpts from the source code. The hidden-layer kernel: each thread computes one output element, with the hidden unit index varying fastest so that consecutive threads read consecutive weight addresses. The OpenMP region: one parallel region covers the whole pass, each stage is a work-shared loop, and the implicit barrier after each loop is required because the next stage reads data written by other threads.
+The main message: there is no universally fastest implementation. The best choice depends on workload size, parallel work, preprocessing cost, memory-transfer overhead, and the ability to overlap CPU and GPU stages. Thank you - I am happy to take questions.
