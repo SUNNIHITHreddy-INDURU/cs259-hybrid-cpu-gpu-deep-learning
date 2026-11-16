@@ -112,11 +112,11 @@ def main():
             t = pd.read_csv(tp) if tp.exists() else None
             rows = []
             for b in sorted(bc.index):
-                r = {"Batch": b, "CUDA-only (ms)": bc.loc[b, "e2e_mean_ms"]}
+                r = {"Batch": b, "CUDA 1-thread pre. (ms)": bc.loc[b, "e2e_mean_ms"]}
                 if bs is not None:
                     r["+OpenMP preproc (ms)"] = bs.loc[b, "e2e_mean_ms"]; r["thr"] = int(bs.loc[b, "threads"])
                 r["+pipeline (ms)"] = bh.loc[b, "e2e_mean_ms"]; r["Hybrid thr"] = int(bh.loc[b, "threads"])
-                r["Hybrid speedup vs CUDA-only"] = bc.loc[b, "e2e_mean_ms"] / bh.loc[b, "e2e_mean_ms"]
+                r["Hybrid speedup vs CUDA"] = bc.loc[b, "e2e_mean_ms"] / bh.loc[b, "e2e_mean_ms"]
                 if t is not None:
                     q = t[(t.batch == b) & (t.a == "hybrid") & (t.b == "cuda")]
                     if len(q):

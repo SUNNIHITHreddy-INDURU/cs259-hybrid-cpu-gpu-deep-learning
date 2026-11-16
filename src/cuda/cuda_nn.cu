@@ -74,8 +74,10 @@ CudaRunner::CudaRunner(const Weights& w, int max_batch, int block_dim) : p_(new 
   Impl& p = *p_;
   p.max_batch = max_batch;
   p.block_dim = block_dim;
+  const double t_init = now_ms();
   CUDA_CHECK(cudaSetDevice(0));
   CUDA_CHECK(cudaFree(nullptr));  // create the context now so it is not charged to a timed pass
+  p.init_ms = now_ms() - t_init;
 
   cudaDeviceProp prop;
   CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
@@ -110,6 +112,7 @@ CudaRunner::CudaRunner(const Weights& w, int max_batch, int block_dim) : p_(new 
   p.setup_ms = now_ms() - t0;
 
   const size_t mb = static_cast<size_t>(max_batch);
+  const double t_alloc = now_ms();
   for (int s = 0; s < kMaxSlots; ++s) {
     CUDA_CHECK(cudaMalloc(&p.d_x[s], mb * kIn * sizeof(float)));
     CUDA_CHECK(cudaMalloc(&p.d_h[s], mb * kHidden * sizeof(float)));
@@ -121,6 +124,7 @@ CudaRunner::CudaRunner(const Weights& w, int max_batch, int block_dim) : p_(new 
     CUDA_CHECK(cudaStreamCreateWithFlags(&p.stream[s], cudaStreamNonBlocking));
     for (int e = 0; e < 4; ++e) CUDA_CHECK(cudaEventCreate(&p.ev[s][e]));
   }
+  p.alloc_ms = now_ms() - t_alloc;
 }
 
 CudaRunner::~CudaRunner() {
@@ -147,8 +151,10 @@ std::string CudaRunner::device_name() const { return p_->name; }
 std::string CudaRunner::device_info() const { return p_->info; }
 int CudaRunner::runtime_version() const { return p_->runtime; }
 double CudaRunner::setup_upload_ms() const { return p_->setup_ms; }
+double CudaRunner::init_ms() const { return p_->init_ms; }
+double CudaRunner::buffer_alloc_ms() const { return p_->alloc_ms; }
 
-// ---- CUDA-only (synchronous) path -------------------------------------------------------------
+// ---- CUDA path with synchronous copies (single- or multi-threaded preprocessing) -------------------------------------------------------------
 
 void CudaRunner::run_sync(const uint8_t* raw, int n, int batch, int pre_threads, float* logits,
                           int32_t* pred, StageTimes& t) {

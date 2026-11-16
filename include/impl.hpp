@@ -41,7 +41,7 @@ class CudaRunner {
   CudaRunner(const CudaRunner&) = delete;
   CudaRunner& operator=(const CudaRunner&) = delete;
 
-  // CUDA-only: synchronous pageable transfers, one batch at a time. pre_threads == 1 runs the
+  // CUDA (single-threaded preprocessing): synchronous pageable transfers, one batch at a time. pre_threads == 1 runs the
   // preprocessing serially ("cuda"); pre_threads > 1 runs it with OpenMP but without any
   // overlap ("hybrid_seq").
   void run_sync(const uint8_t* raw, int n, int batch, int pre_threads, float* logits,
@@ -56,6 +56,8 @@ class CudaRunner {
   std::string device_info() const;   // compute capability, SMs, memory, driver/runtime
   int runtime_version() const;       // CUDA runtime version, e.g. 12020
   double setup_upload_ms() const;    // one-time weight upload
+  double init_ms() const;            // one-time CUDA context creation (cudaSetDevice + first runtime call)
+  double buffer_alloc_ms() const;    // one-time device/pinned buffer, stream and event allocation
 
  private:
   std::unique_ptr<Impl> p_;

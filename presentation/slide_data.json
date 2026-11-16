@@ -1,0 +1,222 @@
+{
+ "best": [
+  {
+   "batch": 1,
+   "fastest": "OpenMP",
+   "t1": 162.8,
+   "second": "Hybrid",
+   "t2": 650.9
+  },
+  {
+   "batch": 8,
+   "fastest": "OpenMP",
+   "t1": 75.5,
+   "second": "Hybrid",
+   "t2": 87.5
+  },
+  {
+   "batch": 32,
+   "fastest": "Hybrid",
+   "t1": 33.3,
+   "second": "OpenMP",
+   "t2": 61.9
+  },
+  {
+   "batch": 64,
+   "fastest": "Hybrid",
+   "t1": 27.9,
+   "second": "OpenMP",
+   "t2": 59.2
+  },
+  {
+   "batch": 128,
+   "fastest": "Hybrid",
+   "t1": 26.5,
+   "second": "OpenMP",
+   "t2": 58.2
+  },
+  {
+   "batch": 256,
+   "fastest": "Hybrid",
+   "t1": 26.0,
+   "second": "CUDA (1-thread pre.)",
+   "t2": 55.1
+  },
+  {
+   "batch": 1024,
+   "fastest": "Hybrid",
+   "t1": 25.2,
+   "second": "CUDA (1-thread pre.)",
+   "t2": 48.3
+  },
+  {
+   "batch": 4096,
+   "fastest": "Hybrid",
+   "t1": 24.7,
+   "second": "CUDA (1-thread pre.)",
+   "t2": 46.7
+  }
+ ],
+ "cpugpu": [
+  {
+   "batch": 1,
+   "serial": 1234.8,
+   "omp": 162.8,
+   "ompthr": 16,
+   "kernel": 1091.0,
+   "cuda": 1507.0,
+   "hyb": 650.9,
+   "hybthr": 1,
+   "ks": 1.13,
+   "cs": 0.82,
+   "hs": 1.9
+  },
+  {
+   "batch": 8,
+   "serial": 1235.7,
+   "omp": 75.5,
+   "ompthr": 24,
+   "kernel": 143.9,
+   "cuda": 218.8,
+   "hyb": 87.5,
+   "hybthr": 8,
+   "ks": 8.59,
+   "cs": 5.65,
+   "hs": 14.13
+  },
+  {
+   "batch": 32,
+   "serial": 1235.0,
+   "omp": 61.9,
+   "ompthr": 24,
+   "kernel": 47.3,
+   "cuda": 85.5,
+   "hyb": 33.3,
+   "hybthr": 2,
+   "ks": 26.1,
+   "cs": 14.45,
+   "hs": 37.09
+  },
+  {
+   "batch": 64,
+   "serial": 1234.8,
+   "omp": 59.2,
+   "ompthr": 24,
+   "kernel": 34.4,
+   "cuda": 65.9,
+   "hyb": 27.9,
+   "hybthr": 24,
+   "ks": 35.87,
+   "cs": 18.73,
+   "hs": 44.2
+  },
+  {
+   "batch": 128,
+   "serial": 1234.6,
+   "omp": 58.2,
+   "ompthr": 24,
+   "kernel": 29.8,
+   "cuda": 58.6,
+   "hyb": 26.5,
+   "hybthr": 24,
+   "ks": 41.43,
+   "cs": 21.06,
+   "hs": 46.59
+  },
+  {
+   "batch": 256,
+   "serial": 1235.2,
+   "omp": 58.9,
+   "ompthr": 24,
+   "kernel": 28.1,
+   "cuda": 55.1,
+   "hyb": 26.0,
+   "hybthr": 24,
+   "ks": 44.01,
+   "cs": 22.4,
+   "hs": 47.54
+  },
+  {
+   "batch": 1024,
+   "serial": 1235.0,
+   "omp": 57.7,
+   "ompthr": 24,
+   "kernel": 23.7,
+   "cuda": 48.3,
+   "hyb": 25.2,
+   "hybthr": 24,
+   "ks": 52.02,
+   "cs": 25.56,
+   "hs": 48.98
+  },
+  {
+   "batch": 4096,
+   "serial": 1235.4,
+   "omp": 57.3,
+   "ompthr": 24,
+   "kernel": 23.0,
+   "cuda": 46.7,
+   "hyb": 24.7,
+   "hybthr": 24,
+   "ks": 53.65,
+   "cs": 26.44,
+   "hs": 50.02
+  }
+ ],
+ "flags": [
+  {
+   "impl": "Serial",
+   "native256": 1235.2,
+   "o3256": 1296.2,
+   "native4096": 1235.4,
+   "o34096": 1295.6
+  },
+  {
+   "impl": "OpenMP (best threads)",
+   "native256": 58.9,
+   "o3256": 61.1,
+   "native4096": 57.3,
+   "o34096": 61.1
+  },
+  {
+   "impl": "CUDA (1-thread pre.)",
+   "native256": 55.1,
+   "o3256": 51.4,
+   "native4096": 46.7,
+   "o34096": 42.7
+  },
+  {
+   "impl": "Hybrid (best threads)",
+   "native256": 26.0,
+   "o3256": 26.1,
+   "native4096": 24.7,
+   "o34096": 24.8
+  }
+ ],
+ "micro": [
+  [
+   "PCIe host-to-device (pageable / pinned)",
+   "9.5 / 10.5 GB/s"
+  ],
+  [
+   "PCIe device-to-host (pageable / pinned)",
+   "10.0 / 10.5 GB/s"
+  ],
+  [
+   "GPU device-to-device copy",
+   "189.5 GB/s"
+  ],
+  [
+   "Kernel launch (async / with sync)",
+   "3.12 / 7.44 \u00b5s"
+  ],
+  [
+   "Xeon memory bandwidth (1 / 8 / 24 threads)",
+   "11.8 / 46.5 / 43.4 GB/s"
+  ],
+  [
+   "Xeon OpenMP fork-join (8 / 24 threads)",
+   "2.13 / 7.16 \u00b5s"
+  ]
+ ]
+}

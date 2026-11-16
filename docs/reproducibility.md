@@ -19,6 +19,14 @@ sbatch --job-name=cs259_o3 --export=ALL,PLATFORM=spartan_k40_o3,BUILD_DIR=build_
 Each job requests one K40 and 24 CPUs, sets `CUDA_ARCH=35` and `THREADS=1,2,4,8,12,16,24`, runs the
 correctness gate, then the benchmark grid and the micro-benchmarks.
 
+**Cold start (Spartan, 10 fresh processes, run after the main benchmarks)**
+```bash
+sbatch --job-name=cs259_cold --export=ALL,PLATFORM=spartan_k40_native,ARCH_FLAGS=-march=native,BUILD_DIR=build_native scripts/spartan_cold.sbatch
+```
+The main benchmark results were produced before the cold-start mode and the extra initialisation timers were added to
+`nn_bench` / `CudaRunner`; those additions do not touch the timed code paths (they time the constructor and add a `--cold`
+mode), and the validation gate was not re-run on the final binary of the cold-start job except through its own output.
+
 **Analysis (any machine with Python 3, NumPy, pandas, SciPy, Matplotlib)**
 ```bash
 python3 analysis/analyze_results.py

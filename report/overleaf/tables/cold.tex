@@ -1,0 +1,19 @@
+\begin{tabular}{lrrrrr}
+\toprule
+Quantity & Mean & Median & Std. dev. & Min & Max \\
+ & (ms) & (ms) & (ms) & (ms) & (ms) \\
+\midrule
+CUDA context creation & 106.83 & 104.64 & 8.11 & 103.19 & 129.79 \\
+Weight upload & 0.40 & 0.40 & 0.01 & 0.38 & 0.42 \\
+Buffer, stream and event allocation & 2.97 & 2.94 & 0.08 & 2.88 & 3.11 \\
+Total one-time GPU set-up & 110.65 & 108.53 & 8.07 & 106.93 & 133.49 \\
+CUDA pass, 1st & 54.99 & 54.96 & 0.24 & 54.67 & 55.35 \\
+CUDA pass, 3rd & 55.02 & 55.05 & 0.12 & 54.77 & 55.17 \\
+Hybrid pass, 1st & 27.35 & 27.47 & 0.36 & 26.79 & 27.78 \\
+Hybrid pass, 2nd & 25.95 & 25.93 & 0.12 & 25.80 & 26.19 \\
+OpenMP (24 threads) pass, 1st & 80.84 & 80.45 & 1.55 & 79.90 & 85.20 \\
+OpenMP (24 threads) pass, 2nd & 63.22 & 63.25 & 0.23 & 62.75 & 63.49 \\
+Serial pass, 1st & 1{,}231.70 & 1{,}231.46 & 1.13 & 1{,}230.34 & 1{,}234.09 \\
+Serial pass, 2nd & 1{,}232.32 & 1{,}232.13 & 0.96 & 1{,}231.11 & 1{,}234.06 \\
+\bottomrule
+\end{tabular}

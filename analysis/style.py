@@ -18,8 +18,8 @@ FIG_DIR = Path(os.environ.get("CS259_FIG", ROOT / "results" / "figures"))
 COLOR = dict(serial="#4B5563", openmp="#2563EB", cuda="#16A34A", hybrid="#7C3AED",
              hybrid_seq="#A78BFA", transfer="#C2570C", transfer2="#F0A36B", other="#9CA3AF",
              grid="#D9D9D9", ink="#1F2937")
-LABEL = dict(serial="Serial CPU", openmp="OpenMP CPU", cuda="CUDA GPU (serial preprocessing)",
-             hybrid_seq="Hybrid, sequential", hybrid="Hybrid, pipelined")
+LABEL = dict(serial="Serial CPU", openmp="OpenMP CPU", cuda="CUDA (1-thread preprocessing)",
+             hybrid_seq="Hybrid-sequential (control)", hybrid="Hybrid-pipelined")
 MARKER = dict(serial="s", openmp="o", cuda="^", hybrid="D", hybrid_seq="v")
 LSTYLE = dict(serial="-", openmp="-", cuda="-", hybrid="-", hybrid_seq="--")
 

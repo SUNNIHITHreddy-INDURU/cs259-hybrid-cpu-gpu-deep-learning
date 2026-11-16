@@ -129,6 +129,49 @@ def main():
             for _, r in S[(S.impl == "cuda") & (S.block == blk)].iterrows():
                 put(f"{P}:cuda:blk{int(blk)}:kernel:{r.batch}", ms(r.kernel_mean_ms))
                 put(f"{P}:cuda:blk{int(blk)}:e2e:{r.batch}", ms(r.e2e_mean_ms))
+
+        # ---- worst-variance configuration: full statistics (the run is kept, nothing is removed)
+        cvs = S.assign(cv=S.e2e_std_ms / S.e2e_mean_ms * 100)
+        wr = cvs.loc[cvs.cv.idxmax()]
+        sel_ = g[(g.impl == wr.impl) & (g.batch == wr.batch) & (g.threads == wr.threads) & (g.block == wr.block) & (g.streams == wr.streams)].e2e_ms.values
+        put(f"{P}:slow:impl", {"openmp": "OpenMP", "serial": "serial", "cuda": "CUDA", "hybrid": "hybrid-pipelined", "hybrid_seq": "hybrid-sequential"}[wr.impl])
+        put(f"{P}:slow:batch", str(int(wr.batch)))
+        put(f"{P}:slow:threads", str(int(wr.threads)))
+        put(f"{P}:slow:n", str(len(sel_)))
+        put(f"{P}:slow:mean", ms(float(np.mean(sel_))))
+        put(f"{P}:slow:median", ms(float(np.median(sel_))))
+        put(f"{P}:slow:std", ms(float(np.std(sel_, ddof=1))))
+        put(f"{P}:slow:min", ms(float(np.min(sel_))))
+        put(f"{P}:slow:max", ms(float(np.max(sel_))))
+        put(f"{P}:slow:count", str(int((sel_ > 1.5 * np.median(sel_)).sum())))
+        put(f"{P}:slow:cv", one(float(wr.cv)))
+        # ---- compute-only comparison: stages 1-3 (hidden layer, output layer, argmax); no preprocessing, no copies
+        cser = S[S.impl == "serial"].set_index("batch")
+        comp_serial = cser.layer1_mean_ms + cser.layer2_mean_ms
+        om = S[S.impl == "openmp"].assign(comp=lambda d: d.layer1_mean_ms + d.layer2_mean_ms)
+        ck = S[(S.impl == "cuda") & (S.block == BLOCK)].set_index("batch")
+        for b in sorted(cser.index):
+            put(f"{P}:comp:serial:{b}", ms(comp_serial[b]))
+            r_ = om[om.batch == b].loc[om[om.batch == b].comp.idxmin()]
+            put(f"{P}:comp:omp:{b}", ms(r_.comp)); put(f"{P}:comp:ompthr:{b}", str(int(r_.threads)))
+            put(f"{P}:comp:ompspeedup:{b}", two(comp_serial[b] / r_.comp))
+            if b in ck.index:
+                put(f"{P}:comp:kernel:{b}", ms(ck.loc[b, "kernel_mean_ms"]))
+                put(f"{P}:comp:gpuvsserial:{b}", two(comp_serial[b] / ck.loc[b, "kernel_mean_ms"]))
+                put(f"{P}:comp:gpuvsomp:{b}", two(r_.comp / ck.loc[b, "kernel_mean_ms"]))
+        # ---- CUDA block-size sensitivity: fixed 16x16 versus best of {8, 16, 32} (end-to-end)
+        cb_ = S[S.impl == "cuda"]
+        if cb_.block.nunique() > 1:
+            gains = {}
+            for b, dd in cb_.groupby("batch"):
+                e16 = float(dd[dd.block == BLOCK].e2e_mean_ms.iloc[0]); eb = dd.loc[dd.e2e_mean_ms.idxmin()]
+                gains[b] = ((e16 - eb.e2e_mean_ms) / e16 * 100, int(eb.block), eb.e2e_mean_ms)
+                put(f"{P}:cuda:bestblock:e2e:{b}", ms(eb.e2e_mean_ms)); put(f"{P}:cuda:bestblock:size:{b}", str(int(eb.block)))
+            bmax = max(gains, key=lambda x: gains[x][0])
+            put(f"{P}:cuda:blockgain:max", one(gains[bmax][0])); put(f"{P}:cuda:blockgain:argb", str(bmax))
+            cwb = [b for b in sorted(gains) if gains[b][2] < S[(S.batch == b) & S.impl.isin(["serial", "openmp"])].e2e_mean_ms.min()]
+            put(f"{P}:cuda:bestblock:crossover", str(cwb[0]) if cwb else "none")
+
         # comparisons between implementations at each batch size
         for b in sorted(S.batch.unique()):
             best_cpu = S[(S.batch == b) & S.impl.isin(["serial", "openmp"])]
@@ -202,6 +245,23 @@ def main():
             put(f"X:serial:SpOverMac:{b}", one(sref("Sp", b) / sref("Mac", b)))
         if "SpO3" in summ and "Sp" in summ:
             put(f"X:serial:O3OverNative:{b}", two(sref("SpO3", b) / sref("Sp", b)))
+    # cold start (10 fresh processes per platform; -1 means not measured)
+    short_c = {"cuda_init_ms": "init", "weight_upload_ms": "upload", "buffer_alloc_ms": "alloc", "constructor_total_ms": "ctor",
+               "cuda_pass1_ms": "cuda1", "cuda_pass2_ms": "cuda2", "cuda_pass3_ms": "cuda3", "hybrid_pass1_ms": "hyb1", "hybrid_pass2_ms": "hyb2",
+               "serial_pass1_ms": "ser1", "serial_pass2_ms": "ser2", "openmp_pass1_ms": "omp1", "openmp_pass2_ms": "omp2"}
+    for f in sorted(ar.RAW.glob("*_cold.csv")):
+        cd = pd.read_csv(f)
+        P = SHORT.get(cd.platform.iloc[0], cd.platform.iloc[0])
+        put(f"{P}:cold:n", str(len(cd)))
+        for col, tag in short_c.items():
+            v = cd[col][cd[col] >= 0]
+            if len(v):
+                for st, val in (("mean", v.mean()), ("median", v.median()), ("std", v.std(ddof=1)), ("min", v.min()), ("max", v.max())):
+                    put(f"{P}:cold:{tag}:{st}", f"{val:.2f}" if val < 100 else f"{val:.1f}")
+        if (cd.cuda_pass1_ms >= 0).all():
+            put(f"{P}:cold:ctorvspass", two(cd.constructor_total_ms.mean() / cd.cuda_pass2_ms.mean()))
+            put(f"{P}:cold:hyb:firstpenalty", one((cd.hybrid_pass1_ms.mean() / cd.hybrid_pass2_ms.mean() - 1) * 100))
+        put(f"{P}:cold:omp:firstpenalty", one((cd.openmp_pass1_ms.mean() / cd.openmp_pass2_ms.mean() - 1) * 100))
     put("X:weights:GB", "8.04")        # 803,840 B x 10,000 images
     # micro-benchmarks
     for f in sorted(ar.RAW.glob("*_micro.csv")):

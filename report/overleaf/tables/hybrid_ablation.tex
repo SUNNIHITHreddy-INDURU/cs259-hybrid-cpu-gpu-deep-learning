@@ -1,7 +1,7 @@
 \begin{tabular}{rrrrrrrr}
 \toprule
-Batch & CUDA-only & Hybrid-sequential (thr.) & Hybrid-pipelined (thr.) & Seq. vs CUDA-only & Pipelined vs CUDA-only & Pipelined vs OpenMP & Welch $p$ \\
- & (ms) & (ms) & (ms) & ($\times$) & ($\times$) & ($\times$) & (pipelined vs CUDA-only) \\
+Batch & CUDA (1-thr. pre.) & Hybrid-seq. control (thr.) & Hybrid-pipelined (thr.) & Control vs CUDA & Pipelined vs CUDA & Pipelined vs OpenMP & Welch $p$ \\
+ & (ms) & (ms) & (ms) & ($\times$) & ($\times$) & ($\times$) & (pipelined vs CUDA) \\
 \midrule
 1 & 1{,}507.0 & 1{,}520.6 (1) & 650.9 (1) & 0.99 & 2.32 & 0.25 & $8.7\times10^{-61}$ \\
 8 & 218.8 & 207.5 (8) & 87.5 (8) & 1.05 & 2.50 & 0.86 & $2.4\times10^{-103}$ \\

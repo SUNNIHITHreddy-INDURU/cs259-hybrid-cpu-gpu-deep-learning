@@ -55,7 +55,7 @@ def fig_exec_time(st, S, plat):
     if has(S, "cuda"):
         line(ax, sel(S, "cuda", block=DEFAULT_BLOCK), "cuda")
     if has(S, "hybrid"):
-        line(ax, best_by_batch(S, "hybrid", block=DEFAULT_BLOCK), "hybrid", label="Hybrid, pipelined (best threads)")
+        line(ax, best_by_batch(S, "hybrid", block=DEFAULT_BLOCK), "hybrid", label="Hybrid-pipelined (best threads)")
     ax.set_yscale("log")
     log2_axis(ax, S.batch.unique())
     ax.set_xlabel("Batch size (images per batch)")
@@ -212,11 +212,11 @@ def fig_hybrid(st, S, plat):
     if not has(S, "cuda", "hybrid"):
         return
     fig, (a, b) = st.figure(wide=True, aspect=0.36, ncols=2)
-    line(a, best_by_batch(S, "openmp"), "openmp", label="OpenMP-only (best threads)")
-    line(a, sel(S, "cuda", block=DEFAULT_BLOCK), "cuda", label="CUDA-only")
+    line(a, best_by_batch(S, "openmp"), "openmp", label="OpenMP (best thread count)")
+    line(a, sel(S, "cuda", block=DEFAULT_BLOCK), "cuda", label="CUDA (1-thread preprocessing)")
     if has(S, "hybrid_seq"):
-        line(a, best_by_batch(S, "hybrid_seq", block=DEFAULT_BLOCK), "hybrid_seq", label="Hybrid, sequential (best threads)")
-    line(a, best_by_batch(S, "hybrid", block=DEFAULT_BLOCK), "hybrid", label="Hybrid, pipelined (best threads)")
+        line(a, best_by_batch(S, "hybrid_seq", block=DEFAULT_BLOCK), "hybrid_seq", label="Hybrid-sequential control (best threads)")
+    line(a, best_by_batch(S, "hybrid", block=DEFAULT_BLOCK), "hybrid", label="Hybrid-pipelined (best threads)")
     a.set_yscale("log")
     log2_axis(a, S.batch.unique())
     a.set_xlabel("Batch size")
@@ -230,12 +230,12 @@ def fig_hybrid(st, S, plat):
             continue
         xs = np.arange(len(d))
         b.bar(xs + off, base.loc[d.batch].values / d.e2e_mean_ms.values, 0.38, color=COLOR[impl],
-              label=LABEL[impl] + " vs CUDA-only")
+              label=LABEL[impl] + " vs CUDA")
     b.axhline(1, color=COLOR["serial"], linewidth=0.9, linestyle="--")
     b.set_xticks(np.arange(len(base)))
     b.set_xticklabels(base.index.astype(int))
     b.set_xlabel("Batch size")
-    b.set_ylabel("Speedup over CUDA-only (x)")
+    b.set_ylabel("Speedup over CUDA (x)")
     b.set_ylim(0, b.get_ylim()[1] * 1.3)
     b.legend(loc="upper left", ncol=1)
     st.save(fig, f"hybrid_compare_{plat}", f"Hybrid vs non-hybrid execution ({pn(plat)})")

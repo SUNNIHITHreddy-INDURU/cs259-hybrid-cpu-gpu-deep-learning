@@ -1,10 +1,10 @@
-\begin{widetable}{The two machines. ``Physical cores / logical threads'' are the hardware counts; ``OpenMP threads used'' is what the benchmark could use. The Spartan job was allocated 24 of the node's 28 CPUs.}{tab:platforms}
+\begin{widetable}{The two machines. ``Physical cores / logical CPUs'' are the hardware counts reported by \texttt{lscpu} (Spartan) and \texttt{sysctl} (M4); ``OpenMP threads used'' is what the benchmark could use. The Spartan job was allocated 24 of the node's 28 CPUs.}{tab:platforms}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}p{0.17\textwidth}p{0.36\textwidth}p{0.39\textwidth}@{}}
 \toprule
  & \textbf{Spartan GPU node (reference)} & \textbf{Apple M4 laptop (CPU only)} \\
 \midrule
 CPU & 2$\times$ Intel Xeon E5-2680 v4, 2.40\,GHz & Apple M4 \\
-Physical cores / logical threads & 28 / 28 (14 per socket, 1 thread per core) & 10 / 10 (4 performance + 6 efficiency) \\
+Physical cores / logical CPUs & 28 / 28 (2 sockets $\times$ 14 cores $\times$ 1 thread per core, no hyper-threading) & 10 / 10 (4 performance + 6 efficiency, no hyper-threading) \\
 OpenMP threads used & 1, 2, 4, 8, 12, 16, 24 & 1, 2, 4, 6, 8, 10 \\
 Cache & 32\,KiB L1d and 256\,KiB L2 per core; 35\,MiB L3 per socket; 2 NUMA nodes & 16\,MiB L2 (performance cluster), 4\,MiB L2 (efficiency cluster) \\
 Memory & 125\,GiB & 16\,GiB \\

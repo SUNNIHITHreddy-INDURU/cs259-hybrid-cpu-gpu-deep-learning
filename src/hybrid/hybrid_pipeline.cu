@@ -5,7 +5,7 @@
 //                         host buffer) - the only stage that runs on the CPU.
 //   DMA engines (async) : host->device copy of the preprocessed batch and device->host copy of
 //                         the logits / predictions, issued with cudaMemcpyAsync on pinned memory.
-//   GPU, CUDA threads   : hidden layer, output layer, argmax (same kernels as the CUDA-only path).
+//   GPU, CUDA threads   : hidden layer, output layer, argmax (same kernels as the synchronous CUDA path).
 //
 // Pipeline: batches are assigned round-robin to `streams` slots (own stream, own device buffers,
 // own pinned buffers). While the GPU works on batches i-1, i-2, ... the CPU already preprocesses

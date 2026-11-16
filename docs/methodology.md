@@ -11,8 +11,34 @@ A **pass** processes the 10,000 MNIST test images in consecutive batches of size
 | 2 Output layer | z = W2^T h + b2, 256 -> 10 | same |
 | 3 Prediction | argmax of the 10 logits | same |
 
-Accumulation order is identical in all implementations (k = 0..783 for the hidden layer, j = 0..255 for
-the output layer), so differences between them come only from fused multiply-add contraction on the device.
+All implementations use the same mathematical operations, input data, weights, dimensions, precision, and
+source-level reduction order (k = 0..783 for the hidden layer, j = 0..255 for the output layer). Small numerical
+differences may result from compiler-specific floating-point optimizations (for example fused multiply-add
+contraction); the contraction options (`-ffp-contract`, `--fmad`) were not set explicitly.
+
+Naming: the four primary implementations are serial, OpenMP, **CUDA with single-threaded CPU preprocessing**
+(its preprocessing runs on one CPU thread, so it is not GPU-only) and the **hybrid OpenMP-CUDA pipeline**.
+*Hybrid-sequential* (OpenMP preprocessing, synchronous copies, no overlap) is a diagnostic control only.
+CUDA streams overlap *different batches*; the stages of one batch are dependent and run in order on one stream.
+
+## Steady state, compute-only and end-to-end
+- All reported times are steady-state. One-time GPU costs (context creation, device/pinned buffer, stream and event
+  allocation, weight upload) are excluded for every implementation; they are measured separately by
+  `benchmarks/run_cold.sh` (10 fresh processes) and reported as cold-start results.
+- *Compute-only* = stages 1-3 (hidden layer, output layer, argmax): CPU = sum of timed stage durations, GPU = CUDA-event
+  time of the three kernels. *End-to-end* = stages 0-3 including copies = wall clock of the pass.
+- Floating-point rates: 2 FLOP per multiply-add of the two layers = 406,528 FLOP per image, 4.07 GFLOP per pass;
+  preprocessing, bias, ReLU and argmax are not counted. Rate = FLOP / end-to-end time unless labelled kernel-only.
+- Tuning: OpenMP and hybrid use the best of the tested thread counts per batch size; CUDA uses a fixed 16x16 block
+  (block sizes 8, 16, 32 were measured; see the block-size sensitivity in the paper). Comparisons are labelled
+  "CUDA with fixed block vs OpenMP with tuned thread count".
+
+## Compiler settings
+| Build | Compiler | Flags |
+|---|---|---|
+| Apple M4 | Apple clang 21.0.0, libomp 23.1.2 | `-O3 -std=c++14 -Xpreprocessor -fopenmp` (no -march/-mcpu) |
+| Spartan reference | host g++ 11.4.1 via nvcc 11.7.99 | host `-O3 -std=c++14 -fopenmp -march=native`; device `-O3 -arch=sm_35` |
+| Spartan sensitivity | same | same, without `-march=native` |
 
 ## Timing
 - **End-to-end** = wall clock of the whole pass (steady clock), measured after all host buffers have been

@@ -87,6 +87,20 @@ def main():
            " & (ms) & (ms) & only (ms) & (ms) & (ms) & kernel-only & CUDA e2e & Hybrid \\\\"],
           rows, "rrrrrrrrr")
 
+    # ---- 2b. compute-only comparison: stages 1-3 (hidden layer, output layer, argmax); no preprocessing, no copies
+    rows = []
+    for b in batches:
+        cser = ser.loc[b, "layer1_mean_ms"] + ser.loc[b, "layer2_mean_ms"]
+        ob = o[o.batch == b].assign(comp=lambda d: d.layer1_mean_ms + d.layer2_mean_ms)
+        ob = ob.loc[ob.comp.idxmin()]
+        k = cu.loc[b, "kernel_mean_ms"]
+        rows.append([str(b), num(cser), f"{num(ob.comp)} ({int(ob.threads)})", num(k), num(cser / k, 2), num(ob.comp / k, 2)])
+    write("compute_only",
+          ["Batch & Serial & OpenMP (threads) & GPU kernels & \\multicolumn{2}{c}{GPU kernels' speedup ($\\times$)} \\\\",
+           "\\cmidrule(lr){5-6}",
+           " & (ms) & (ms) & (ms) & vs serial & vs OpenMP \\\\"],
+          rows, "rrrrrr")
+
     # ---- 3. CUDA stage breakdown
     rows = []
     for b in batches:
@@ -109,8 +123,8 @@ def main():
                      num(cu.loc[b, "e2e_mean_ms"] / hs.loc[b, "e2e_mean_ms"], 2), num(cu.loc[b, "e2e_mean_ms"] / hy.loc[b, "e2e_mean_ms"], 2),
                      num(omp.loc[b, "e2e_mean_ms"] / hy.loc[b, "e2e_mean_ms"], 2), sci(p)])
     write("hybrid_ablation",
-          ["Batch & CUDA-only & Hybrid-sequential (thr.) & Hybrid-pipelined (thr.) & Seq. vs CUDA-only & Pipelined vs CUDA-only & Pipelined vs OpenMP & Welch $p$ \\\\",
-           " & (ms) & (ms) & (ms) & ($\\times$) & ($\\times$) & ($\\times$) & (pipelined vs CUDA-only) \\\\"],
+          ["Batch & CUDA (1-thr. pre.) & Hybrid-seq. control (thr.) & Hybrid-pipelined (thr.) & Control vs CUDA & Pipelined vs CUDA & Pipelined vs OpenMP & Welch $p$ \\\\",
+           " & (ms) & (ms) & (ms) & ($\\times$) & ($\\times$) & ($\\times$) & (pipelined vs CUDA) \\\\"],
           rows, "rrrrrrrr")
 
     # ---- 5. measured platform limits (micro-benchmarks)
@@ -133,7 +147,7 @@ def main():
     # ---- 5b. fastest implementation per batch size
     rows = []
     for b in batches:
-        cand = {"Serial": ser.loc[b, "e2e_mean_ms"], "OpenMP": omp.loc[b, "e2e_mean_ms"], "CUDA-only": cu.loc[b, "e2e_mean_ms"],
+        cand = {"Serial": ser.loc[b, "e2e_mean_ms"], "OpenMP": omp.loc[b, "e2e_mean_ms"], "CUDA (1-thr. pre.)": cu.loc[b, "e2e_mean_ms"],
                 "Hybrid-pipelined": hy.loc[b, "e2e_mean_ms"]}
         order = sorted(cand, key=cand.get)
         rows.append([str(b), order[0], num(cand[order[0]]), order[1], num(cand[order[1]]), num(cand[order[1]] / cand[order[0]], 2)])
@@ -144,7 +158,7 @@ def main():
     s3 = S[SENS]
     rows = []
     for label, f in (("Serial", lambda d: d[d.impl == "serial"]), ("OpenMP, best thread count", lambda d: d[d.impl == "openmp"]),
-                     ("CUDA-only (16$\\times$16)", lambda d: d[(d.impl == "cuda") & (d.block == BLOCK)]),
+                     ("CUDA, 1-thr. preproc. (16$\\times$16)", lambda d: d[(d.impl == "cuda") & (d.block == BLOCK)]),
                      ("Hybrid-pipelined, best", lambda d: d[(d.impl == "hybrid") & (d.block == BLOCK)])):
         r = [label]
         for b in (256, 4096):
@@ -157,6 +171,20 @@ def main():
            "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
            " & native (ms) & \\texttt{-O3} (ms) & ratio & native (ms) & \\texttt{-O3} (ms) & ratio \\\\"],
           rows, "lrrrrrr")
+
+    # ---- 7. cold start (Spartan, 10 fresh processes)
+    cf = sorted(ar.RAW.glob(f"{REF}_*_cold.csv"))
+    if cf:
+        cd = pd.read_csv(cf[0])
+        items = [("CUDA context creation", "cuda_init_ms"), ("Weight upload", "weight_upload_ms"), ("Buffer, stream and event allocation", "buffer_alloc_ms"),
+                 ("Total one-time GPU set-up", "constructor_total_ms"), ("CUDA pass, 1st", "cuda_pass1_ms"), ("CUDA pass, 3rd", "cuda_pass3_ms"),
+                 ("Hybrid pass, 1st", "hybrid_pass1_ms"), ("Hybrid pass, 2nd", "hybrid_pass2_ms"), ("OpenMP (24 threads) pass, 1st", "openmp_pass1_ms"),
+                 ("OpenMP (24 threads) pass, 2nd", "openmp_pass2_ms"), ("Serial pass, 1st", "serial_pass1_ms"), ("Serial pass, 2nd", "serial_pass2_ms")]
+        rows = []
+        for label, col in items:
+            v = cd[col]
+            rows.append([label, num(v.mean(), 2), num(v.median(), 2), num(v.std(ddof=1), 2), num(v.min(), 2), num(v.max(), 2)])
+        write("cold", ["Quantity & Mean & Median & Std. dev. & Min & Max \\\\", " & (ms) & (ms) & (ms) & (ms) & (ms) \\\\"], rows, "lrrrrr")
 
 
 if __name__ == "__main__":

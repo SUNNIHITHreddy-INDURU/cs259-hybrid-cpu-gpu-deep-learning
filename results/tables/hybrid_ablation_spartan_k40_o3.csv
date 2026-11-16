@@ -1,4 +1,4 @@
-Batch,CUDA-only (ms),+OpenMP preproc (ms),thr,+pipeline (ms),Hybrid thr,Hybrid speedup vs CUDA-only,p (Welch)
+Batch,CUDA 1-thread pre. (ms),+OpenMP preproc (ms),thr,+pipeline (ms),Hybrid thr,Hybrid speedup vs CUDA,p (Welch)
 1,1497.0347598,1498.8009645,1,649.10596375,1,2.3063025814019107,3.8688247923568002e-75
 8,216.337866,208.04569750000002,8,88.6434852,8,2.4405388113056725,1.7205769001065386e-102
 32,81.02497360000001,68.79128245,12,33.56319325,1,2.4141020491249,5.481428083395004e-84

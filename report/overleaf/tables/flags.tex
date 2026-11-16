@@ -6,7 +6,7 @@ Implementation & \multicolumn{3}{c}{Batch 256} & \multicolumn{3}{c}{Batch 4096} 
 \midrule
 Serial & 1{,}235.2 & 1{,}296.2 & 1.05 & 1{,}235.4 & 1{,}295.6 & 1.05 \\
 OpenMP, best thread count & 58.9 & 61.1 & 1.04 & 57.3 & 61.1 & 1.07 \\
-CUDA-only (16$\times$16) & 55.1 & 51.4 & 0.93 & 46.7 & 42.7 & 0.91 \\
+CUDA, 1-thr. preproc. (16$\times$16) & 55.1 & 51.4 & 0.93 & 46.7 & 42.7 & 0.91 \\
 Hybrid-pipelined, best & 26.0 & 26.1 & 1.01 & 24.7 & 24.8 & 1.00 \\
 \bottomrule
 \end{tabular}

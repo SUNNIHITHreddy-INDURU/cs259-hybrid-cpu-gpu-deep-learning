@@ -53,6 +53,8 @@ struct Args {
   int warmup = 3;
   int n = 10000;
   bool micro = false;
+  bool cold = false;   // cold-start measurement (see below)
+  int cold_batch = 256;
 };
 
 std::string iso_utc() {
@@ -89,6 +91,8 @@ Args parse(int argc, char** argv, int hw_threads) {
     else if (k == "--warmup") a.warmup = std::atoi(next().c_str());
     else if (k == "--n") a.n = std::atoi(next().c_str());
     else if (k == "--micro") a.micro = true;
+    else if (k == "--cold") a.cold = true;
+    else if (k == "--cold-batch") a.cold_batch = std::atoi(next().c_str());
     else die("unknown argument " + k);
   }
   if (a.threads.empty()) {
@@ -139,6 +143,48 @@ int main(int argc, char** argv) {
 #else
   if (need_gpu) die("this binary was built without CUDA (use `make gpu`)");
 #endif
+
+
+  if (args.cold) {
+    // Cold start: ONE process = one genuine cold start. Rows are appended to --out (never overwritten).
+    // Times: CUDA context creation, weight upload, buffer allocation, then the first and later passes.
+    const int cb = std::min(args.cold_batch, n);
+    const int T = args.threads.back();
+    std::vector<float> lg(static_cast<size_t>(n) * kOut);
+    std::vector<int32_t> pr(n);
+    StageTimes t;
+    const bool fresh = !std::ifstream(args.out).good();
+    std::ofstream cf(args.out, std::ios::app);
+    if (fresh)
+      cf << "timestamp_utc,platform,batch,threads,cuda_init_ms,weight_upload_ms,buffer_alloc_ms,constructor_total_ms,"
+            "cuda_pass1_ms,cuda_pass2_ms,cuda_pass3_ms,hybrid_pass1_ms,hybrid_pass2_ms,serial_pass1_ms,serial_pass2_ms,"
+            "openmp_pass1_ms,openmp_pass2_ms\n";
+    double init = -1, upl = -1, alloc = -1, ctor = -1, c1 = -1, c2 = -1, c3 = -1, h1 = -1, h2 = -1;
+#ifdef USE_CUDA
+    {
+      const double t0 = now_ms();
+      CudaRunner r(w, cb, args.default_block);
+      ctor = now_ms() - t0;
+      init = r.init_ms(); upl = r.setup_upload_ms(); alloc = r.buffer_alloc_ms();
+      r.run_sync(ds.images.data(), n, cb, 1, lg.data(), pr.data(), t); c1 = t.e2e_ms;
+      r.run_sync(ds.images.data(), n, cb, 1, lg.data(), pr.data(), t); c2 = t.e2e_ms;
+      r.run_sync(ds.images.data(), n, cb, 1, lg.data(), pr.data(), t); c3 = t.e2e_ms;
+      r.run_pipelined(ds.images.data(), n, cb, T, args.streams, lg.data(), pr.data(), t); h1 = t.e2e_ms;
+      r.run_pipelined(ds.images.data(), n, cb, T, args.streams, lg.data(), pr.data(), t); h2 = t.e2e_ms;
+    }
+#endif
+    run_serial(w, ds.images.data(), n, cb, lg.data(), pr.data(), t); const double s1 = t.e2e_ms;
+    run_serial(w, ds.images.data(), n, cb, lg.data(), pr.data(), t); const double s2 = t.e2e_ms;
+    run_openmp(w, ds.images.data(), n, cb, T, lg.data(), pr.data(), t); const double o1 = t.e2e_ms;
+    run_openmp(w, ds.images.data(), n, cb, T, lg.data(), pr.data(), t); const double o2 = t.e2e_ms;
+    char row[512];
+    std::snprintf(row, sizeof(row), "%s,%s,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f\n", iso_utc().c_str(),
+                  args.platform.c_str(), cb, T, init, upl, alloc, ctor, c1, c2, c3, h1, h2, s1, s2, o1, o2);
+    cf << row;
+    std::printf("cold start: ctor %.1f ms (init %.1f, weights %.2f, buffers %.1f); CUDA pass1/2/3 %.1f/%.1f/%.1f ms; hybrid pass1/2 %.1f/%.1f ms\n",
+                ctor, init, upl, alloc, c1, c2, c3, h1, h2);
+    return 0;
+  }
 
   {
     std::ifstream probe(args.out);

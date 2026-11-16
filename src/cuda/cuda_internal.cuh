@@ -1,4 +1,4 @@
-// cuda_internal.cuh - state and helpers shared by cuda_nn.cu (CUDA-only) and
+// cuda_internal.cuh - state and helpers shared by cuda_nn.cu (synchronous CUDA path) and
 // hybrid_pipeline.cu (pipelined hybrid). Not included by any host-only file.
 #pragma once
 #include <cuda_runtime.h>
@@ -45,7 +45,9 @@ struct CudaRunner::Impl {
   cudaEvent_t ev[kMaxSlots][4] = {};
   std::string name, info;
   int runtime = 0;
-  double setup_ms = 0;
+  double setup_ms = 0;     // weight allocation + upload
+  double init_ms = 0;      // context creation
+  double alloc_ms = 0;     // buffers, pinned memory, streams, events
 };
 
 // Launch the three kernels (hidden layer, output layer, argmax) for one batch of B samples
