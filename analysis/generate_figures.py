@@ -61,7 +61,7 @@ def fig_exec_time(st, S, plat):
     ax.set_xlabel("Batch size (images per batch)")
     ax.set_ylabel("End-to-end time for 10,000 images (ms)")
     ax.legend(loc="best")
-    st.save(fig, f"exec_time_{plat}", f"Execution time vs batch size ({pn(plat)})")
+    st.save(fig, f"exec_time_{plat}", f"Execution time vs batch size, {pn(plat)}")
 
 
 def fig_throughput(st, S, plat):
@@ -78,7 +78,7 @@ def fig_throughput(st, S, plat):
     ax.set_xlabel("Batch size (images per batch)")
     ax.set_ylabel("Throughput (images / s)")
     ax.legend(loc="best")
-    st.save(fig, f"throughput_{plat}", f"Throughput vs batch size ({pn(plat)})")
+    st.save(fig, f"throughput_{plat}", f"Throughput vs batch size, {pn(plat)}")
 
 
 # ---------------------------------------------------------------------------------- figures 4,5,6,13
@@ -122,7 +122,7 @@ def fig_omp_scaling(st, S, plat):
         _p_core_marker(ax, S)
         ax.legend(loc="best", ncol=1)
         st.save(fig, f"omp_{kind}_{plat}", {"time": "OpenMP execution time vs threads", "speedup": "OpenMP speedup vs threads",
-                                           "efficiency": "OpenMP efficiency vs threads"}[kind] + f" ({pn(plat)})")
+                                           "efficiency": "OpenMP efficiency vs threads"}[kind] + f", {pn(plat)}")
 
 
 def fig_amdahl(st, S, plat):
@@ -147,7 +147,7 @@ def fig_amdahl(st, S, plat):
     ax.set_xlabel("OpenMP threads")
     ax.set_ylabel("Speedup over serial (x)")
     ax.legend(loc="upper left")
-    st.save(fig, f"amdahl_fit_{plat}", f"Measured speedup and fitted Amdahl curves ({pn(plat)})")
+    st.save(fig, f"amdahl_fit_{plat}", f"Measured speedup and fitted Amdahl curves, {pn(plat)}")
 
 
 # ---------------------------------------------------------------------------------- figures 7,8,9,12
@@ -179,7 +179,7 @@ def fig_kernel_vs_e2e(st, S, plat):
     b.set_ylabel("Speedup over serial CPU (x)")
     b.set_ylim(top=b.get_ylim()[1] * 3)
     b.legend(loc="upper left")
-    st.save(fig, f"cuda_kernel_vs_e2e_{plat}", f"CUDA: kernel-only vs end-to-end ({pn(plat)})")
+    st.save(fig, f"cuda_kernel_vs_e2e_{plat}", f"CUDA: kernel-only vs end-to-end, {pn(plat)}")
 
 
 def fig_transfer(st, S, plat):
@@ -205,7 +205,7 @@ def fig_transfer(st, S, plat):
     ax.set_xlabel("Batch size")
     ax.set_ylabel("Share of end-to-end time (%)")
     ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.22), ncol=2)
-    st.save(fig, f"transfer_breakdown_{plat}", f"CUDA time breakdown by stage ({pn(plat)})")
+    st.save(fig, f"transfer_breakdown_{plat}", f"CUDA time breakdown by stage, {pn(plat)}")
 
 
 def fig_hybrid(st, S, plat):
@@ -238,7 +238,7 @@ def fig_hybrid(st, S, plat):
     b.set_ylabel("Speedup over CUDA (x)")
     b.set_ylim(0, b.get_ylim()[1] * 1.3)
     b.legend(loc="upper left", ncol=1)
-    st.save(fig, f"hybrid_compare_{plat}", f"Hybrid vs non-hybrid execution ({pn(plat)})")
+    st.save(fig, f"hybrid_compare_{plat}", f"Hybrid vs non-hybrid execution, {pn(plat)}")
 
 
 def fig_blocksize(st, S, plat):
@@ -256,7 +256,7 @@ def fig_blocksize(st, S, plat):
     ax.set_xlabel("Batch size")
     ax.set_ylabel("Kernel time for 10,000 images (ms)")
     ax.legend(title="Hidden-layer block", loc="best")
-    st.save(fig, f"cuda_block_size_{plat}", f"CUDA thread-block size (kernel time, {plat})")
+    st.save(fig, f"cuda_block_size_{plat}", f"CUDA thread-block size (kernel time), {pn(plat)}")
 
 
 # ---------------------------------------------------------------------------------- figure 11
@@ -303,7 +303,7 @@ def fig_architecture(st):
     lanes = [
         ("Serial CPU", [("Preprocess\n(1 thread)", COLOR["serial"]), ("Hidden layer\n784→256, ReLU", COLOR["serial"]), ("Output layer\n256→10 + argmax", COLOR["serial"])]),
         ("OpenMP CPU", [("Preprocess\n(T threads)", COLOR["openmp"]), ("Hidden layer\n(image, block)", COLOR["openmp"]), ("Output layer\n+ argmax", COLOR["openmp"])]),
-        ("CUDA GPU", [("Preprocess\n(1 CPU thread)", COLOR["serial"]), ("H2D copy", COLOR["transfer"]), ("Kernels:\nhidden, output,\nargmax", COLOR["cuda"]), ("D2H copy", COLOR["transfer"])]),
+        ("CUDA\n(1-thread preproc.)", [("Preprocess\n(1 CPU thread)", COLOR["serial"]), ("H2D copy", COLOR["transfer"]), ("Kernels:\nhidden, output,\nargmax", COLOR["cuda"]), ("D2H copy", COLOR["transfer"])]),
         ("Hybrid\nOpenMP + CUDA", [("Preprocess\n(T threads,\npinned buf.)", COLOR["openmp"]), ("H2D copy\n(async)", COLOR["transfer"]), ("Kernels\n(streams)", COLOR["cuda"]), ("D2H copy\n(async)", COLOR["transfer"])]),
     ]
     h, gap = 0.17, 0.045
@@ -319,9 +319,9 @@ def fig_architecture(st):
         xe = x0 + n * (bw + 0.03) - 0.03
         _box(ax, 0.85, y + 0.03, 0.14, h - 0.06, "predicted\ndigits", "#E5E7EB", tc=COLOR["ink"])
         _arrow(ax, xe, y + h / 2, 0.85, y + h / 2)
-    ax.text(0.83, 0.08, "Hybrid: preprocessing of batch i+1 overlaps with\ncopy + kernels of batch i (software pipeline)", fontsize=plt.rcParams["font.size"] - 1, color=COLOR["hybrid"], ha="center", va="center")
+    ax.text(0.5, 0.095, "Hybrid: preprocessing of batch i+1 overlaps with copy and kernels of batch i (software pipeline)", fontsize=plt.rcParams["font.size"] - 1, color=COLOR["hybrid"], ha="center", va="center")
     handles = [Rectangle((0, 0), 1, 1, fc=COLOR[k]) for k in ("serial", "openmp", "cuda", "transfer")]
-    ax.legend(handles, ["CPU, one thread", "CPU, OpenMP threads", "GPU, CUDA threads", "PCIe transfer"], loc="lower left", ncol=4, bbox_to_anchor=(0.0, -0.02))
+    ax.legend(handles, ["CPU, one thread", "CPU, OpenMP threads", "GPU, CUDA threads", "PCIe transfer"], loc="lower left", ncol=4, bbox_to_anchor=(0.0, -0.06))
     st.save(fig, "architecture", "Project execution architecture: four implementations of the same workload")
 
 

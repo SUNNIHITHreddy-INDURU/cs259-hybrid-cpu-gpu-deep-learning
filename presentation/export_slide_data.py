@@ -51,5 +51,15 @@ out["micro"] = [["PCIe host-to-device (pageable / pinned)", f"{m[('h2d_pageable_
                 ["Kernel launch (async / with sync)", f"{m[('kernel_launch_async', 0)]:.2f} / {m[('kernel_launch_sync', 0)]:.2f} µs"],
                 ["Xeon memory bandwidth (1 / 8 / 24 threads)", f"{m[('cpu_triad_bandwidth', 1)]:.1f} / {m[('cpu_triad_bandwidth', 8)]:.1f} / {m[('cpu_triad_bandwidth', 24)]:.1f} GB/s"],
                 ["Xeon OpenMP fork-join (8 / 24 threads)", f"{m[('openmp_fork_join', 8)]:.2f} / {m[('openmp_fork_join', 24)]:.2f} µs"]]
+import re
+nums = {}
+sup = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+for _, r in pd.read_csv(ROOT / "results" / "processed" / "numbers.csv", dtype=str).iterrows():
+    v = str(r.value).replace("{,}", ",")
+    mm = re.match(r"\\ensuremath\{([\d.]+)\\times10\^\{(-?\d+)\}\}", v)
+    if mm:
+        v = f"{mm.group(1)}×10{mm.group(2).translate(sup)}"
+    nums[r.key] = v
+out["num"] = nums
 (ROOT / "presentation" / "slide_data.json").write_text(json.dumps(out, indent=1))
 print("wrote presentation/slide_data.json")

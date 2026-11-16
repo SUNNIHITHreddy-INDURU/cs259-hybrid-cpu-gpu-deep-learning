@@ -75,7 +75,7 @@ def log2_axis(ax, values, which="x"):
         ax.set_yticklabels([str(v) for v in values])
 
 
-PLAT_NAME = {"spartan_k40_native": "Spartan node: Tesla K40m + Xeon E5-2680 v4", "spartan_k40_o3": "Spartan node, plain -O3",
+PLAT_NAME = {"spartan_k40_native": "Spartan K40m node", "spartan_k40_o3": "Spartan K40m node, plain -O3",
              "mac_m4": "Apple M4"}
 
 
