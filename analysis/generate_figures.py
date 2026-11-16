@@ -167,10 +167,10 @@ def fig_kernel_vs_e2e(st, S, plat):
     a.set_xlabel("Batch size")
     a.set_ylabel("Time for 10,000 images (ms)")
     a.legend(loc="upper right")
-    ks = s.loc[c.batch, "e2e_mean_ms"].values / c.kernel_mean_ms.values
+    ks = (s.loc[c.batch, "layer1_mean_ms"].values + s.loc[c.batch, "layer2_mean_ms"].values) / c.kernel_mean_ms.values  # compute-only: serial stages 1-3 / GPU kernels
     es = s.loc[c.batch, "e2e_mean_ms"].values / c.e2e_mean_ms.values
-    b.plot(x, ks, color=COLOR["cuda"], marker="^", label="Kernel-only speedup over serial")
-    b.plot(x, es, color=COLOR["cuda"], marker="^", linestyle="--", markerfacecolor="white", label="End-to-end speedup over serial")
+    b.plot(x, ks, color=COLOR["cuda"], marker="^", label="Kernel-only vs serial stages 1-3 (compute-only)")
+    b.plot(x, es, color=COLOR["cuda"], marker="^", linestyle="--", markerfacecolor="white", label="CUDA end-to-end vs serial end-to-end")
     b.axhline(1, color=COLOR["serial"], linewidth=0.8)
     b.set_yscale("log")
     b.set_xticks(x)
@@ -297,50 +297,193 @@ def _arrow(ax, x0, y0, x1, y1):
     ax.add_patch(FancyArrowPatch((x0, y0), (x1, y1), arrowstyle="-|>", mutation_scale=7, color=COLOR["ink"], lw=0.8))
 
 
+def _lane_label(ax, y, h, text):
+    ax.text(0.0, y + h / 2, text, ha="left", va="center", fontsize=plt.rcParams["font.size"] + 0.5, fontweight="bold", color=COLOR["ink"])
+
+
 def fig_architecture(st):
-    fig, ax = st.figure(wide=True, aspect=0.44)
+    """Figure: the four implementations, with OpenMP threads, copies, kernels, the three CUDA streams and the batch overlap."""
+    fig, ax = st.figure(wide=True, aspect=0.50)
     ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.grid(False)
-    lanes = [
-        ("Serial CPU", [("Preprocess\n(1 thread)", COLOR["serial"]), ("Hidden layer\n784→256, ReLU", COLOR["serial"]), ("Output layer\n256→10 + argmax", COLOR["serial"])]),
-        ("OpenMP CPU", [("Preprocess\n(T threads)", COLOR["openmp"]), ("Hidden layer\n(image, block)", COLOR["openmp"]), ("Output layer\n+ argmax", COLOR["openmp"])]),
-        ("CUDA\n(1-thread preproc.)", [("Preprocess\n(1 CPU thread)", COLOR["serial"]), ("H2D copy", COLOR["transfer"]), ("Kernels:\nhidden, output,\nargmax", COLOR["cuda"]), ("D2H copy", COLOR["transfer"])]),
-        ("Hybrid\nOpenMP + CUDA", [("Preprocess\n(T threads,\npinned buf.)", COLOR["openmp"]), ("H2D copy\n(async)", COLOR["transfer"]), ("Kernels\n(streams)", COLOR["cuda"]), ("D2H copy\n(async)", COLOR["transfer"])]),
-    ]
-    h, gap = 0.17, 0.045
-    for i, (name, boxes) in enumerate(lanes):
-        y = 0.97 - (i + 1) * (h + gap) + gap
-        ax.text(0.0, y + h / 2, name, ha="left", va="center", fontsize=plt.rcParams["font.size"] + 0.5, fontweight="bold", color=COLOR["ink"])
-        n = len(boxes); x0, bw = 0.17, 0.14
+    fs = plt.rcParams["font.size"] - 1
+    x0, bw, gp = 0.17, 0.135, 0.03
+
+    def chain(y, h, boxes, label):
+        _lane_label(ax, y, h, label)
         for j, (t, c) in enumerate(boxes):
-            x = x0 + j * (bw + 0.03)
-            _box(ax, x, y, bw, h, t, c)
+            x = x0 + j * (bw + gp)
+            _box(ax, x, y, bw, h, t, c, fs=fs)
             if j:
-                _arrow(ax, x - 0.03, y + h / 2, x, y + h / 2)
-        xe = x0 + n * (bw + 0.03) - 0.03
-        _box(ax, 0.85, y + 0.03, 0.14, h - 0.06, "predicted\ndigits", "#E5E7EB", tc=COLOR["ink"])
-        _arrow(ax, xe, y + h / 2, 0.85, y + h / 2)
-    ax.text(0.5, 0.095, "Hybrid: preprocessing of batch i+1 overlaps with copy and kernels of batch i (software pipeline)", fontsize=plt.rcParams["font.size"] - 1, color=COLOR["hybrid"], ha="center", va="center")
+                _arrow(ax, x - gp, y + h / 2, x, y + h / 2)
+        xe = x0 + len(boxes) * (bw + gp) - gp
+        _box(ax, 0.885, y + 0.15 * h, 0.105, 0.7 * h, "predicted\ndigits", "#E5E7EB", tc=COLOR["ink"], fs=fs)
+        _arrow(ax, xe, y + h / 2, 0.885, y + h / 2)
+
+    h = 0.10
+    chain(0.89, h, [("Preprocess\n(1 thread)", COLOR["serial"]), ("Hidden layer\n784\u2192256, ReLU", COLOR["serial"]),
+                     ("Output layer\n256\u219210", COLOR["serial"]), ("argmax", COLOR["serial"])], "Serial CPU")
+    chain(0.76, h, [("Preprocess\n(T OpenMP threads)", COLOR["openmp"]), ("Hidden layer\n(parallel for)", COLOR["openmp"]),
+                     ("Output layer\n(parallel for)", COLOR["openmp"]), ("argmax\n(parallel for)", COLOR["openmp"])], "OpenMP CPU")
+    chain(0.63, h, [("Preprocess\n(1 CPU thread)", COLOR["serial"]), ("H2D copy\n(pageable)", COLOR["transfer"]),
+                     ("Kernels: hidden,\noutput, argmax", COLOR["cuda"]), ("D2H copy", COLOR["transfer"])], "CUDA (1-thread\npreprocessing)")
+    # hybrid lane: OpenMP preprocessing of batch i+1, then three CUDA streams carrying batches i, i-1, i-2
+    yb, ht = 0.07, 0.47
+    _lane_label(ax, yb, ht, "Hybrid\nOpenMP + CUDA")
+    _box(ax, x0, yb + 0.17, bw, 0.13, "Preprocess batch i+1\n(T OpenMP threads,\npinned buffer)", COLOR["openmp"], fs=fs)
+    rx0, rw = 0.355, 0.50
+    ax.add_patch(Rectangle((rx0, yb - 0.045), rw, ht + 0.01, fc="none", ec=COLOR["hybrid"], lw=0.9, ls="--"))
+    ax.text(rx0 + rw / 2, yb + ht - 0.03, "three CUDA streams: batch i uses stream (i mod 3) and its own buffers",
+            ha="center", va="bottom", fontsize=fs, color=COLOR["hybrid"])
+    sh = 0.115
+    for k in range(3):
+        y = yb + 0.30 - k * (sh + 0.045)
+        ax.text(rx0 + 0.01, y + sh / 2, f"stream {k}", ha="left", va="center", fontsize=fs, color=COLOR["ink"])
+        for j, (t, c) in enumerate((("H2D async", COLOR["transfer"]), ("kernels", COLOR["cuda"]), ("D2H async", COLOR["transfer"]))):
+            x = rx0 + 0.095 + j * 0.135
+            _box(ax, x, y, 0.115, sh, t, c, fs=fs)
+            if j:
+                _arrow(ax, x - 0.02, y + sh / 2, x, y + sh / 2)
+    _arrow(ax, x0 + bw, yb + 0.235, rx0, yb + 0.235)
+    _box(ax, 0.885, yb + 0.235 - 0.07, 0.105, 0.14, "predicted\ndigits", "#E5E7EB", tc=COLOR["ink"], fs=fs)
+    _arrow(ax, rx0 + rw, yb + 0.235, 0.885, yb + 0.235)
+    ax.text(x0 + bw / 2, yb + 0.06, "overlap: while the GPU copies and\ncomputes batch i, the CPU\npreprocesses batch i+1", ha="center", va="center",
+            fontsize=fs, color=COLOR["hybrid"])
     handles = [Rectangle((0, 0), 1, 1, fc=COLOR[k]) for k in ("serial", "openmp", "cuda", "transfer")]
-    ax.legend(handles, ["CPU, one thread", "CPU, OpenMP threads", "GPU, CUDA threads", "PCIe transfer"], loc="lower left", ncol=4, bbox_to_anchor=(0.0, -0.06))
+    ax.legend(handles, ["CPU, one thread", "CPU, OpenMP threads", "GPU, CUDA kernels", "PCIe copy"], loc="lower center", ncol=4,
+              bbox_to_anchor=(0.5, -0.095))
     st.save(fig, "architecture", "Project execution architecture: four implementations of the same workload")
 
 
-def fig_network(st):
-    fig, ax = st.figure(wide=True, aspect=0.22)
-    ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.grid(False)
-    items = [("Raw image\n28×28 uint8\n(784 bytes)", "#E5E7EB", COLOR["ink"]), ("Per-image\nstandardisation\n(preprocess)", COLOR["openmp"], "white"),
-             ("Input\n784 float32", COLOR["serial"], "white"), ("Hidden\n256 units\nW1: 784×256\nReLU", COLOR["cuda"], "white"),
-             ("Output\n10 logits\nW2: 256×10", COLOR["cuda"], "white"), ("argmax\n→ digit 0-9", COLOR["hybrid"], "white")]
-    n = len(items); bw = 0.13; gap = (1 - n * bw) / (n - 1)
-    for i, (t, c, tc) in enumerate(items):
-        x = i * (bw + gap)
-        _box(ax, x, 0.22, bw, 0.76, t, c, tc=tc, fs=plt.rcParams["font.size"])
-        if i:
-            _arrow(ax, x - gap, 0.60, x, 0.60)
-    ax.text(0.5, 0.04, "203,530 parameters  |  203,264 multiply-accumulates (406,528 floating-point operations) per image  |  float32",
-            ha="center", fontsize=plt.rcParams["font.size"] - 0.5, color=COLOR["ink"])
-    st.save(fig, "network_architecture", "Workload: MNIST MLP 784 → 256 → ReLU → 10")
+def fig_hybrid_timeline(st):
+    """Schematic (not to scale) time line of the pipelined hybrid: CPU preprocessing of batch i+1 overlaps copy and compute of batch i."""
+    fig, ax = st.figure(wide=True, aspect=0.36)
+    fs = plt.rcParams["font.size"] - 1
+    rows = ["CPU (OpenMP threads)", "CUDA stream 0", "CUDA stream 1", "CUDA stream 2"]
+    ypos = {r: len(rows) - 1 - i for i, r in enumerate(rows)}
+    H, K, D = 0.5, 1.0, 0.4          # schematic durations of H2D, kernels, D2H relative to one preprocessing step
+    n = 6
+    for i in range(n):
+        ax.add_patch(Rectangle((i, ypos[rows[0]] - 0.32), 1, 0.64, fc=COLOR["openmp"], ec="white", lw=0.8))
+        ax.text(i + 0.5, ypos[rows[0]], f"preprocess\nbatch {i}", ha="center", va="center", color="white", fontsize=fs)
+        r = rows[1 + i % 3]
+        t = i + 1
+        for dur, col, lab in ((H, COLOR["transfer"], "H2D"), (K, COLOR["cuda"], f"kernels {i}"), (D, COLOR["transfer"], "D2H")):
+            ax.add_patch(Rectangle((t, ypos[r] - 0.32), dur, 0.64, fc=col, ec="white", lw=0.8))
+            ax.text(t + dur / 2, ypos[r], lab, ha="center", va="center", color="white", fontsize=fs - 0.5 if dur < 0.5 else fs)
+            t += dur
+    # event guard: batch 3 reuses the buffers of batch 0 (stream 0)
+    end0 = 1 + H + K + D
+    ax.annotate("", xy=(3, ypos[rows[0]] - 0.34), xytext=(end0, ypos[rows[1]] + 0.34),
+                arrowprops=dict(arrowstyle="-|>", color=COLOR["hybrid"], lw=1.0, ls="--", shrinkA=0, shrinkB=0))
+    ax.text(3.2, 2.5, "CUDA event: batch 3 may overwrite slot 0 only after batch 0 has finished", fontsize=fs, color=COLOR["hybrid"], va="center")
+    ax.set_yticks([ypos[r] for r in rows])
+    ax.set_yticklabels(rows)
+    ax.set_xlim(-0.05, n + 2.0)
+    ax.set_ylim(-0.7, len(rows) - 0.35)
+    ax.set_xticks([])
+    ax.set_xlabel("Time (schematic, not to scale)  \u2192")
+    ax.grid(False)
+    ax.spines["left"].set_visible(False)
+    ax.tick_params(axis="y", length=0)
+    st.save(fig, "hybrid_timeline", "Pipelined hybrid: time line of batches")
 
+
+def fig_network(st):
+    """Figure: the workload as a flow chart (MNIST image -> preprocessing -> hidden layer -> ReLU -> output layer -> argmax -> digit)."""
+    fig, ax = st.figure(wide=True, aspect=0.25)
+    ax.axis("off"); ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.grid(False)
+    fs = plt.rcParams["font.size"] - 0.5
+    items = [("MNIST image\n28\u00d728 uint8\n(784 bytes)", "#E5E7EB", COLOR["ink"], ""),
+             ("Preprocessing\nper-image\nstandardization", COLOR["openmp"], "white", "stage 0"),
+             ("Hidden layer\n784\u2192256\nW1, b1", COLOR["cuda"], "white", "stage 1"),
+             ("ReLU\nmax(0, x)", COLOR["cuda"], "white", "stage 1"),
+             ("Output layer\n256\u219210\nW2, b2", COLOR["cuda"], "white", "stage 2"),
+             ("argmax\nover 10 logits", COLOR["hybrid"], "white", "stage 3"),
+             ("Predicted\ndigit\n(0\u20139)", "#E5E7EB", COLOR["ink"], "")]
+    n = len(items); bw = 0.12; gap = (1 - n * bw) / (n - 1)
+    for i, (t, c, tc, stg) in enumerate(items):
+        x = i * (bw + gap)
+        _box(ax, x, 0.30, bw, 0.62, t, c, tc=tc, fs=fs)
+        if stg:
+            ax.text(x + bw / 2, 0.20, stg, ha="center", va="center", fontsize=fs - 0.5, color=COLOR["ink"], style="italic")
+        if i:
+            _arrow(ax, x - gap, 0.61, x, 0.61)
+    ax.text(0.5, 0.04, "203,530 parameters  |  203,264 multiply-accumulates (406,528 floating-point operations) per image  |  float32",
+            ha="center", fontsize=fs, color=COLOR["ink"])
+    st.save(fig, "network_architecture", "Workload: MNIST MLP 784 \u2192 256 \u2192 ReLU \u2192 10")
+
+
+def fig_speedup(st, S, plat):
+    """Figure: speedup over serial (same machine and batch size) of the four primary implementations."""
+    if not has(S, "serial", "cuda", "hybrid"):
+        return
+    ser = sel(S, "serial").set_index("batch").e2e_mean_ms
+    fig, ax = st.figure(aspect=0.78)
+    ax.axhline(1, color=COLOR["serial"], linestyle="-", linewidth=1.0, label="Serial CPU (1.0x)")
+    for impl, d, lab in (("openmp", best_by_batch(S, "openmp"), "OpenMP CPU (best thread count)"),
+                         ("cuda", sel(S, "cuda", block=DEFAULT_BLOCK), LABEL["cuda"]),
+                         ("hybrid", best_by_batch(S, "hybrid", block=DEFAULT_BLOCK), "Hybrid-pipelined (best threads)")):
+        ax.plot(d.batch, ser.loc[d.batch].values / d.e2e_mean_ms.values, color=COLOR[impl], marker=MARKER[impl], linestyle=LSTYLE[impl], label=lab)
+    ax.set_yscale("log")
+    log2_axis(ax, S.batch.unique())
+    ax.set_yticks([0.5, 1, 2, 5, 10, 20, 50])
+    ax.set_yticklabels(["0.5", "1", "2", "5", "10", "20", "50"])
+    ax.set_xlabel("Batch size (images per batch)")
+    ax.set_ylabel("End-to-end speedup over serial CPU (x)")
+    ax.legend(loc="center right", bbox_to_anchor=(1.0, 0.36))
+    st.save(fig, f"speedup_{plat}", f"End-to-end speedup over serial, {pn(plat)}")
+
+
+def fig_cold(st):
+    """Figure: cold start (10 fresh processes, batch 256, 24 threads) against steady state."""
+    files = sorted(ar.RAW.glob("spartan_k40_native_*_cold.csv"))
+    if not files:
+        return
+    c = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    fig, (a, b) = st.figure(wide=True, aspect=0.40, ncols=2, gridspec_kw={"width_ratios": [1.5, 1]})
+    fs = plt.rcParams["font.size"]
+    names = [("Serial CPU", "serial"), ("OpenMP CPU\n(24 threads)", "openmp"), ("CUDA\n(1-thread pre.)", "cuda"), ("Hybrid-\npipelined", "hybrid")]
+    x = np.arange(len(names)); w = 0.38
+    first = [c[f"{k}_pass1_ms"].mean() for _, k in names]
+    later = [c[f"{k}_pass2_ms"].mean() for _, k in names]
+    fe = [c[f"{k}_pass1_ms"].std() for _, k in names]
+    le = [c[f"{k}_pass2_ms"].std() for _, k in names]
+    cols = [COLOR[k] for _, k in names]
+    a.bar(x - w / 2, first, w, yerr=fe, capsize=1.5, color=cols, hatch="////", edgecolor="white")
+    a.bar(x + w / 2, later, w, yerr=le, capsize=1.5, color=cols)
+    for xi, (f1, l1) in enumerate(zip(first, later)):
+        a.text(xi - w / 2, f1 * 1.18, f"{f1:,.1f}", ha="center", va="bottom", fontsize=fs - 2)
+        a.text(xi + w / 2, l1 * 1.18, f"{l1:,.1f}", ha="center", va="bottom", fontsize=fs - 2)
+    a.set_yscale("log")
+    a.set_ylim(top=a.get_ylim()[1] * 2)
+    a.set_xticks(x); a.set_xticklabels([n for n, _ in names])
+    a.set_ylabel("Time for 10,000 images (ms)")
+    a.set_title("(a) First pass versus second pass", fontsize=fs)
+    ha = [Rectangle((0, 0), 1, 1, fc=COLOR["other"], hatch="////", ec="white"), Rectangle((0, 0), 1, 1, fc=COLOR["other"])]
+    a.legend(ha, ["first pass after set-up", "second pass (steady state)"], loc="upper right")
+    comps = [("cuda_init_ms", "CUDA context creation", COLOR["cuda"]), ("weight_upload_ms", "Weight upload", COLOR["transfer"]),
+             ("buffer_alloc_ms", "Buffer, stream and event allocation", COLOR["other"])]
+    left, handles = 0.0, []
+    for key, lab, col in comps:
+        v = c[key].mean()
+        b.barh([1], [v], left=left, color=col, edgecolor="white", linewidth=0.4)
+        handles.append((Rectangle((0, 0), 1, 1, fc=col), f"{lab}: {v:.2f} ms"))
+        left += v
+    total = c.constructor_total_ms.mean()
+    rest = total - left
+    b.barh([1], [rest], left=left, color="#E5E7EB", edgecolor=COLOR["other"], linewidth=0.4)
+    handles.append((Rectangle((0, 0), 1, 1, fc="#E5E7EB", ec=COLOR["other"]), f"Other set-up code (not itemized): {rest:.2f} ms"))
+    steady = c.cuda_pass3_ms.mean()
+    b.barh([0], [steady], color=COLOR["cuda"], hatch="////", edgecolor="white")
+    b.text(total * 1.02, 1, f"{total:.1f} ms", va="center", fontsize=fs - 1)
+    b.text(steady * 1.04, 0, f"{steady:.1f} ms", va="center", fontsize=fs - 1)
+    b.set_yticks([1, 0]); b.set_yticklabels(["One-time GPU\nset-up (total)", "One steady-state\nCUDA pass"])
+    b.set_xlabel("Time (ms)")
+    b.set_xlim(0, total * 1.28)
+    b.set_ylim(-0.6, 1.6)
+    b.set_title("(b) One-time set-up (excluded)", fontsize=fs)
+    fig.legend([h for h, _ in handles], [t for _, t in handles], loc="outside lower right", ncol=1, fontsize=fs - 1)
+    st.save(fig, "cold_start", "Cold start versus steady state")
 
 
 # ---------------------------------------------------------------------------------- composites (two platforms)
@@ -415,7 +558,9 @@ def main():
     for st in STYLES:
         st.apply()
         fig_architecture(st)
+        fig_hybrid_timeline(st)
         fig_network(st)
+        fig_cold(st)
         fig_correctness(st)
         main_plats = [p for p in ('mac_m4', 'spartan_k40_native') if p in summaries]
         fig_omp_combined(st, summaries, main_plats)
@@ -423,6 +568,7 @@ def main():
         for plat, S in summaries.items():
             fig_exec_time(st, S, plat)
             fig_throughput(st, S, plat)
+            fig_speedup(st, S, plat)
             fig_omp_scaling(st, S, plat)
             fig_amdahl(st, S, plat)
             fig_kernel_vs_e2e(st, S, plat)

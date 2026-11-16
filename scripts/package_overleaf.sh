@@ -4,6 +4,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 python3 analysis/generate_numbers.py >/dev/null
+python3 analysis/generate_paper_tables.py >/dev/null
+# figures used by the paper: results/figures/paper -> report/overleaf/figures
+for f in architecture hybrid_timeline network_architecture cold_start correctness_all omp_combined amdahl_combined \
+         exec_time_spartan_k40_native speedup_spartan_k40_native throughput_spartan_k40_native \
+         cuda_kernel_vs_e2e_spartan_k40_native transfer_breakdown_spartan_k40_native hybrid_compare_spartan_k40_native \
+         cuda_block_size_spartan_k40_native; do
+  cp "results/figures/paper/$f.pdf" "report/overleaf/figures/$f.pdf"
+done
 python3 scripts/check_units.py
 STAGE="$(mktemp -d)"; trap 'rm -rf "$STAGE"' EXIT
 O=report/overleaf

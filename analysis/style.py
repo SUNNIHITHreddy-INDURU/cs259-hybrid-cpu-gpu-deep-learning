@@ -1,6 +1,6 @@
-"""Shared plotting style: fixed colours per implementation, paper (final size) and slide variants.
+"""Shared plotting style: fixed colors per implementation, paper (final size) and slide variants.
 
-Palette (checked with a colour-vision-deficiency / contrast validator; serial is intentionally a
+Palette (checked with a color-vision-deficiency / contrast validator; serial is intentionally a
 neutral gray as required, so identity is also carried by marker shape, line style and labels):
   Serial CPU gray, OpenMP CPU blue, CUDA GPU green, Hybrid purple, transfer orange.
 """

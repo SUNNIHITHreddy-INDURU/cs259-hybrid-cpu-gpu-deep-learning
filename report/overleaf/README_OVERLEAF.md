@@ -131,7 +131,7 @@ OpenMP     & 1.62 & 5.9$\times$ & 0.37 \\
 
 ### Bibliography tips (BibTeX)
 
-* Put `{...}` around capitalised words in titles you want kept (`{ImageNet}`, `{CUDA}`), otherwise BibTeX
+* Put `{...}` around capitalized words in titles you want kept (`{ImageNet}`, `{CUDA}`), otherwise BibTeX
   lowercases them.
 * Hyphenated first names: write `Hwu, Wen-mei W.` (Last, First) or `{Wen-mei} W. Hwu`.
 * A `url` field is printed at the end of the entry; `doi`, `eprint` etc. are ignored by `cs259.bst`.

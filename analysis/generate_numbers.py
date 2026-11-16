@@ -110,7 +110,7 @@ def main():
             put(f"{P}:cuda:d2h:{b}", ms(r.d2h_mean_ms))
             put(f"{P}:cuda:pre:{b}", ms(r.pre_mean_ms))
             put(f"{P}:cuda:speedup:{b}", two(r.speedup_vs_serial))
-            put(f"{P}:cuda:kspeedup:{b}", two(ser.loc[b, "e2e_mean_ms"] / r.kernel_mean_ms))
+            put(f"{P}:cuda:kspeedup:{b}", two((ser.loc[b, "layer1_mean_ms"] + ser.loc[b, "layer2_mean_ms"]) / r.kernel_mean_ms))  # compute-only: serial stages 1-3 / GPU kernels
             put(f"{P}:cuda:tshare:{b}", one((r.h2d_mean_ms + r.d2h_mean_ms) / r.e2e_mean_ms * 100))
             put(f"{P}:cuda:kshare:{b}", one(r.kernel_mean_ms / r.e2e_mean_ms * 100))
             put(f"{P}:cuda:preshare:{b}", one(r.pre_mean_ms / r.e2e_mean_ms * 100))

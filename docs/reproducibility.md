@@ -23,7 +23,7 @@ correctness gate, then the benchmark grid and the micro-benchmarks.
 ```bash
 sbatch --job-name=cs259_cold --export=ALL,PLATFORM=spartan_k40_native,ARCH_FLAGS=-march=native,BUILD_DIR=build_native scripts/spartan_cold.sbatch
 ```
-The main benchmark results were produced before the cold-start mode and the extra initialisation timers were added to
+The main benchmark results were produced before the cold-start mode and the extra initialization timers were added to
 `nn_bench` / `CudaRunner`; those additions do not touch the timed code paths (they time the constructor and add a `--cold`
 mode), and the validation gate was not re-run on the final binary of the cold-start job except through its own output.
 
@@ -53,6 +53,6 @@ together with micro-benchmark results (`*_bench_micro.csv`) and the run logs, wh
 at the start and end of each benchmark.
 
 ## Known sources of run-to-run variation
-Other jobs and background services on shared machines, CPU frequency and thermal behaviour, and (on macOS)
+Other jobs and background services on shared machines, CPU frequency and thermal behavior, and (on macOS)
 thread placement chosen by the scheduler. The coefficient of variation of each configuration is reported in
 the processed summary (`results/processed/summary_<platform>.csv`).

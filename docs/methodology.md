@@ -6,7 +6,7 @@ A **pass** processes the 10,000 MNIST test images in consecutive batches of size
 
 | Stage | Work | Where it runs |
 |---|---|---|
-| 0 Preprocess | per-image standardisation of 784 raw pixels | serial: 1 CPU thread; OpenMP: T threads; CUDA: 1 CPU thread; hybrid: T OpenMP threads |
+| 0 Preprocess | per-image standardization of 784 raw pixels | serial: 1 CPU thread; OpenMP: T threads; CUDA: 1 CPU thread; hybrid: T OpenMP threads |
 | 1 Hidden layer | h = ReLU(W1^T x + b1), 784 -> 256 | CPU loops / OpenMP loops / CUDA kernel |
 | 2 Output layer | z = W2^T h + b2, 256 -> 10 | same |
 | 3 Prediction | argmax of the 10 logits | same |

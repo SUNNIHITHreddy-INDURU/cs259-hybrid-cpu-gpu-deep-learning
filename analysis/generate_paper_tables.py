@@ -78,14 +78,15 @@ def main():
         rows.append([str(b), num(ser.loc[b, "e2e_mean_ms"]), f"{num(omp.loc[b, 'e2e_mean_ms'])} ({int(omp.loc[b, 'threads'])})",
                      num(cu.loc[b, "kernel_mean_ms"]), num(cu.loc[b, "e2e_mean_ms"]),
                      f"{num(hy.loc[b, 'e2e_mean_ms'])} ({int(hy.loc[b, 'threads'])})",
-                     num(ser.loc[b, "e2e_mean_ms"] / cu.loc[b, "kernel_mean_ms"], 2),
+                     num(ser.loc[b, "e2e_mean_ms"] / omp.loc[b, "e2e_mean_ms"], 2),
+                     num((ser.loc[b, "layer1_mean_ms"] + ser.loc[b, "layer2_mean_ms"]) / cu.loc[b, "kernel_mean_ms"], 2),
                      num(ser.loc[b, "e2e_mean_ms"] / cu.loc[b, "e2e_mean_ms"], 2),
                      num(ser.loc[b, "e2e_mean_ms"] / hy.loc[b, "e2e_mean_ms"], 2)])
     write("cpu_vs_gpu",
-          ["Batch & Serial & OpenMP (threads) & CUDA kernel & CUDA end-to-end & Hybrid (threads) & \\multicolumn{3}{c}{Speedup over serial ($\\times$)} \\\\",
-           "\\cmidrule(lr){7-9}",
-           " & (ms) & (ms) & only (ms) & (ms) & (ms) & kernel-only & CUDA e2e & Hybrid \\\\"],
-          rows, "rrrrrrrrr")
+          ["Batch & Serial & OpenMP (threads) & CUDA kernel & CUDA end-to-end & Hybrid (threads) & \\multicolumn{4}{c}{Speedup over serial ($\\times$)} \\\\",
+           "\\cmidrule(lr){7-10}",
+           " & (ms) & (ms) & only (ms) & (ms) & (ms) & OpenMP & kernel-only$^{\\ast}$ & CUDA e2e & Hybrid \\\\"],
+          rows, "rrrrrrrrrr")
 
     # ---- 2b. compute-only comparison: stages 1-3 (hidden layer, output layer, argmax); no preprocessing, no copies
     rows = []
@@ -171,6 +172,21 @@ def main():
            "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
            " & native (ms) & \\texttt{-O3} (ms) & ratio & native (ms) & \\texttt{-O3} (ms) & ratio \\\\"],
           rows, "lrrrrrr")
+
+    # ---- 6b. CUDA block-size comparison (hidden-layer kernel; 8x8, 16x16, 32x32)
+    cb = s[s.impl == "cuda"]
+    rows = []
+    for b in batches:
+        d = cb[cb.batch == b].set_index("block")
+        e = d.e2e_mean_ms
+        gain = (1 - e.min() / e[BLOCK]) * 100
+        rows.append([str(b)] + [num(d.loc[k, "kernel_mean_ms"]) for k in (8, 16, 32)] + [num(e[k]) for k in (8, 16, 32)] +
+                    [f"{int(e.idxmin())}$\\times${int(e.idxmin())}", num(gain)])
+    write("blocksize",
+          ["Batch & \\multicolumn{3}{c}{CUDA kernels only (ms)} & \\multicolumn{3}{c}{CUDA end-to-end (ms)} & Fastest & Gain over \\\\",
+           "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}",
+           " & 8$\\times$8 & 16$\\times$16 & 32$\\times$32 & 8$\\times$8 & 16$\\times$16 & 32$\\times$32 & block (end-to-end) & 16$\\times$16 (\\%) \\\\"],
+          rows, "rrrrrrrcr")
 
     # ---- 7. cold start (Spartan, 10 fresh processes)
     cf = sorted(ar.RAW.glob(f"{REF}_*_cold.csv"))

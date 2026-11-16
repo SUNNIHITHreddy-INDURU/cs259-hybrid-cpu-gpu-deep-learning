@@ -1,8 +1,11 @@
-\textbf{Dataset.} MNIST~\cite{lecun1998gradient} contains 28$\times$28 grayscale images of handwritten digits (60{,}000 for training, 10{,}000 for testing). We run inference on the 10{,}000 test images. The files are downloaded with a script and verified by MD5 and SHA-256 checksums.
+\subsection{Dataset}
+MNIST~\cite{lecun1998gradient} contains 28$\times$28 grayscale images of handwritten digits (60{,}000 for training, 10{,}000 for testing). We run inference on the 10{,}000 test images. The files are downloaded with a script and verified by MD5 and SHA-256 checksums.
 
-\textbf{Network.} A fully connected network 784$\to$256$\to$10 with a ReLU after the hidden layer and float32 arithmetic (Figure~\ref{fig:network}). It has 203{,}530 parameters (814{,}120 bytes). The weights were trained once, outside the timed code, with a NumPy script (no deep-learning framework): He initialisation~\cite{he2015delving}, Adam~\cite{kingma2015adam} with learning rate $10^{-3}$, batch size 128, 10 epochs and seed 0. These hyper-parameters were fixed in advance and not tuned on the test set. The trained network classifies \val{Mac:accuracy}\,\% of the test images correctly. All implementations load the same weight file.
+\subsection{Neural Network}
+A fully connected network 784$\to$256$\to$10 with a ReLU after the hidden layer and float32 arithmetic (Figure~\ref{fig:network}). It has 203{,}530 parameters (814{,}120 bytes). The weights were trained once, outside the timed code, with a NumPy script (no deep-learning framework): He initialization~\cite{he2015delving}, Adam~\cite{kingma2015adam} with learning rate $10^{-3}$, batch size 128, 10 epochs and seed 0. These hyper-parameters were fixed in advance and not tuned on the test set. The trained network classifies \val{Mac:accuracy}\,\% of the test images correctly. All implementations load the same weight file.
 
-\textbf{Pipeline.} A \emph{pass} processes all 10{,}000 images in consecutive batches of size $B$ and performs four stages: (0)~per-image standardisation of the raw 8-bit pixels, $x_i\leftarrow(p_i-\mu)/\sqrt{\sigma^2+\epsilon}$ with $\mu$ and $\sigma^2$ computed per image; (1)~the hidden layer $h=\mathrm{ReLU}(W_1^{\top}x+b_1)$; (2)~the output layer $z=W_2^{\top}h+b_2$; (3)~the prediction $\arg\max z$. We use batch sizes 1, 8, 32, 64, 128, 256, 1024 and 4096; when $B$ does not divide 10{,}000 the last batch is smaller.
+\subsection{Pipeline}
+Figure~\ref{fig:network} shows the stages. A \emph{pass} processes all 10{,}000 images in consecutive batches of size $B$ and performs four stages: (0)~per-image standardization of the raw 8-bit pixels, $x_i\leftarrow(p_i-\mu)/\sqrt{\sigma^2+\epsilon}$ with $\mu$ and $\sigma^2$ computed per image; (1)~the hidden layer $h=\mathrm{ReLU}(W_1^{\top}x+b_1)$; (2)~the output layer $z=W_2^{\top}h+b_2$; (3)~the prediction $\arg\max z$. We use batch sizes 1, 8, 32, 64, 128, 256, 1024 and 4096; when $B$ does not divide 10{,}000 the last batch is smaller.
 
 \begin{coltable}{Work per image, from the layer dimensions.}{tab:work}
 \begin{tabular}{@{}lrr@{}}
@@ -20,4 +23,4 @@ Total & 203{,}264 & 814{,}120 \\
 \footnotesize Input: 784 B (uint8) before and 3{,}136 B (float32) after stage~0; output: 44 B (10 logits and the class). One pass: 4.07 GFLOP in stages 1--2, 31.4 MB copied to the GPU, 0.44 MB copied back.
 \end{coltable}
 
-\widefigure{network_architecture.pdf}{The workload: preprocessing and a 784$\to$256$\to$10 network with ReLU.}{fig:network}
+\widefigure{network_architecture.pdf}{Workload flow chart. A MNIST image is standardized (stage~0), passes through the hidden layer and the ReLU (stage~1) and the output layer (stage~2), and the argmax of the ten logits (stage~3) is the predicted digit. All implementations execute these stages on the same weights.}{fig:network}
