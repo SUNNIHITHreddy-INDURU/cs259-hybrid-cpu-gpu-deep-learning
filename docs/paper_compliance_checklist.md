@@ -115,8 +115,7 @@ Hill-Marty, roofline, benchmarking practice, OpenMP, CUDA, transfers, streams an
 and collaboration, deep-learning performance, MNIST, initialization and optimizer. Provenance of each field:
 `docs/reference_verification.md`.
 
-The only failed check is the repository entry: the URL answers HTTP 404 without credentials because the repository is private and
-empty (see section 9).
+All 23 entries pass, including the repository entry: with no credentials, `https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning` answers HTTP 200 (see section 9).
 
 Section 11 also carries an "Original material" paragraph: all figures and tables were created by the author for the paper from the
 project's own measurements, source code and calculations, none copied or adapted from another publication; the data figures are
@@ -131,9 +130,11 @@ with a fixed block size versus OpenMP and hybrid configurations selected from th
 comparison."); the GPU is an older Tesla K40m; CPU and GPU code use platform-specific optimizations; the cluster is shared and
 timing variation is reported (median coefficient of variation 0.2 %).
 
-## 9. Open item
+## 9. GitHub link
 
 The repository URL in the Availability paragraph and in reference [11] is
-`https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning`. On 2026-11-16 the repository exists but is **private and
-empty** (nothing has been pushed), so the link does not work for a reader until the owner pushes and either makes the repository public or
-gives the instructor access. The course template says references must be published materials accessible to the public.
+`https://github.com/SUNNIHITHreddy-INDURU/cs259-hybrid-cpu-gpu-deep-learning`. On 2026-11-16 the project (18 commits, sole author) was pushed
+and the repository was set to **public** at the student's request, so the link opens without logging in (HTTP 200 for the repository page
+and for `README.md`). Earlier notes of the student (`requirements/professor_requirements.md`) say the repository must be private;
+that conflicts with a link the instructor can open without an invitation, so the student must decide which one applies
+(public, or private with the instructor added as a collaborator).

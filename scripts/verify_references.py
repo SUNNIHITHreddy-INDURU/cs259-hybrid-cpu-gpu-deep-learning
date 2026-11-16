@@ -224,7 +224,7 @@ def check_web(key, f, res):
     if "github.com" in url:
         code = status(url)
         res.append(("URL reachable without login (anyone can open it)", code == 200,
-                    f"HTTP {code}" + ("  -> the repository is private or not pushed yet" if code == 404 else "")))
+                    f"HTTP {code}" + ("  -> the repository is private, empty or missing" if code == 404 else "")))
         return
     if url.endswith(".pdf"):
         raw = http(url, binary=True)[1]
