@@ -11,7 +11,7 @@ import re
 import sys
 
 UNIT = re.compile(r"^(?:\\,|~|\s)*(?:ms\b|\\mu|\$\\mu|GB/s|GFLOP/s|GB\b|MB\b|MiB|KiB|GiB|MHz|GHz|\\%|\\,\\%|\$\\times\$|threads|images|pass(?:es)?\b|--)")
-DIMENSIONLESS = re.compile(r":(eff|f|r2|kf|maxp|cilo|cihi|maxerr|meanerr|runs|thr|crossover|n|total|passed|cpuThreads|accuracy|agree|p|cv:[a-z0-9]+)(:|$)")
+DIMENSIONLESS = re.compile(r":(eff|f|r2|kf|maxp|cilo|cihi|maxerr|meanerr|runs|thr|crossover|n|total|passed|cpuThreads|accuracy|agree|p|cv:[a-z0-9]+|slow:(impl|batch|threads|n|count)|blockgain:argb|bestblock:(size|crossover)|cold:n)(:|$)")
 
 bad = 0
 files = sys.argv[1:] or sorted(glob.glob("report/overleaf/sections/*.tex"))
